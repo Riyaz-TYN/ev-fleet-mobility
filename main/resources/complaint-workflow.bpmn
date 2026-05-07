@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+  targetNamespace="http://camunda.org/examples">
+
+  <bpmn:process id="complaintWorkflow"
+                name="Complaint Workflow"
+                isExecutable="true"
+                camunda:historyTimeToLive="30">
+
+    <!-- START -->
+    <bpmn:startEvent id="start" name="Complaint Submitted"/>
+
+    <!-- AI SERVICE -->
+    <bpmn:serviceTask id="aiTask"
+                      name="AI Suggestion"
+                      camunda:delegateExpression="${aiService}"/>
+
+    <!-- USER REVIEWS AI -->
+    <bpmn:userTask id="userTask"
+                   name="User Reviews AI"
+                   camunda:assignee="demo"/>
+
+    <!-- USER DECISION -->
+    <bpmn:exclusiveGateway id="gatewayUser"/>
+
+    <!-- USER RESOLUTION UPDATE -->
+    <bpmn:serviceTask id="userResolvedTask"
+                      name="Update User Resolution"
+                      camunda:delegateExpression="${userResolutionService}"/>
+
+    <!-- USER CLOSED -->
+    <bpmn:endEvent id="endClosed" name="Closed"/>
+
+    <!-- FLOWS -->
+    <bpmn:sequenceFlow id="flow1"
+                       sourceRef="start"
+                       targetRef="aiTask"/>
+
+    <bpmn:sequenceFlow id="flow2"
+                       sourceRef="aiTask"
+                       targetRef="userTask"/>
+
+    <bpmn:sequenceFlow id="flow3"
+                       sourceRef="userTask"
+                       targetRef="gatewayUser"/>
+
+    <!-- USER RESOLVED -->
+    <bpmn:sequenceFlow id="flow_user_yes"
+                       sourceRef="gatewayUser"
+                       targetRef="userResolvedTask">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${resolved == true}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+    <bpmn:sequenceFlow id="flow_user_resolved_end"
+                       sourceRef="userResolvedTask"
+                       targetRef="endClosed"/>
+
+    <!-- USER CONTINUE AI -->
+    <bpmn:sequenceFlow id="flow_continue_ai"
+                       sourceRef="gatewayUser"
+                       targetRef="gatewayAiContinue">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${continueAi == true}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+    <!-- USER NOT RESOLVED -->
+    <bpmn:sequenceFlow id="flow_user_no"
+                       sourceRef="gatewayUser"
+                       targetRef="vendorAssign">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${resolved == false &amp;&amp; continueAi == false}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+    <!-- AI CONTINUE GATEWAY -->
+    <bpmn:exclusiveGateway id="gatewayAiContinue"/>
+
+    <!-- RETRY AI -->
+    <bpmn:sequenceFlow id="flow_retry_ai"
+                       sourceRef="gatewayAiContinue"
+                       targetRef="aiTask">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${aiAttemptCount &lt; 3}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+    <!-- ASSIGN VENDOR AFTER 3 ATTEMPTS -->
+    <bpmn:sequenceFlow id="flow_assign_vendor"
+                       sourceRef="gatewayAiContinue"
+                       targetRef="vendorAssign">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${aiAttemptCount &gt;= 3}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+    <!-- VENDOR ASSIGNMENT -->
+    <bpmn:serviceTask id="vendorAssign"
+                      name="Assign Vendor"
+                      camunda:delegateExpression="${vendorService}"/>
+
+    <!-- NOTIFY -->
+    <bpmn:serviceTask id="notifyVendor"
+                      name="Notify Vendor"
+                      camunda:delegateExpression="${notificationService}"/>
+
+    <!-- VENDOR TASK -->
+    <bpmn:userTask id="vendorTask"
+                   name="Vendor Resolves"
+                   camunda:assignee="demo"/>
+
+    <bpmn:sequenceFlow id="flow_vendor1"
+                       sourceRef="vendorAssign"
+                       targetRef="notifyVendor"/>
+
+    <bpmn:sequenceFlow id="flow_vendor2"
+                       sourceRef="notifyVendor"
+                       targetRef="vendorTask"/>
+
+    <!-- SLA TIMER -->
+    <bpmn:boundaryEvent id="slaTimer"
+                        attachedToRef="vendorTask"
+                        cancelActivity="true">
+
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration>PT2H</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+
+    </bpmn:boundaryEvent>
+
+    <bpmn:sequenceFlow id="flow_sla"
+                       sourceRef="slaTimer"
+                       targetRef="escalateTask"/>
+
+    <!-- VENDOR DECISION -->
+    <bpmn:exclusiveGateway id="gatewayVendor"
+                           default="flow_vendor_no"/>
+
+    <bpmn:sequenceFlow id="flow_vendor3"
+                       sourceRef="vendorTask"
+                       targetRef="gatewayVendor"/>
+
+    <!-- VENDOR RESOLUTION SERVICE -->
+    <bpmn:serviceTask id="vendorResolvedTask"
+                      name="Update Vendor Resolution"
+                      camunda:delegateExpression="${vendorResolutionService}"/>
+
+    <!-- VENDOR RESOLVED -->
+    <bpmn:endEvent id="endResolved"
+                   name="Resolved"/>
+
+    <bpmn:sequenceFlow id="flow_vendor_yes"
+                       sourceRef="gatewayVendor"
+                       targetRef="vendorResolvedTask">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${vendorResolved == true}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+    <bpmn:sequenceFlow id="flow_vendor_resolved_end"
+                       sourceRef="vendorResolvedTask"
+                       targetRef="endResolved"/>
+
+    <!-- VENDOR FAILED -->
+    <bpmn:sequenceFlow id="flow_vendor_no"
+                       sourceRef="gatewayVendor"
+                       targetRef="escalateTask"/>
+
+    <!-- ESCALATION -->
+    <bpmn:serviceTask id="escalateTask"
+                      name="Escalate"
+                      camunda:delegateExpression="${escalationService}"/>
+
+    <!-- MANAGER REVIEW -->
+    <bpmn:userTask id="managerTask"
+                   name="Manager Review"
+                   camunda:assignee="demo"/>
+
+    <bpmn:sequenceFlow id="flow_escalate"
+                       sourceRef="escalateTask"
+                       targetRef="managerTask"/>
+
+    <!-- MANAGER GATEWAY -->
+    <bpmn:exclusiveGateway id="gatewayManager"/>
+
+    <bpmn:sequenceFlow id="flow_manager"
+                       sourceRef="managerTask"
+                       targetRef="gatewayManager"/>
+
+    <!-- MANAGER DECISION SERVICE -->
+    <bpmn:serviceTask id="managerDecisionTask"
+                      name="Apply Manager Decision"
+                      camunda:delegateExpression="${managerDecisionService}"/>
+
+    <!-- RESOLVE -->
+    <bpmn:sequenceFlow id="flow_manager_resolve"
+                       sourceRef="gatewayManager"
+                       targetRef="managerDecisionTask">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${managerDecision == 'RESOLVE'}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+    <!-- REJECT -->
+    <bpmn:sequenceFlow id="flow_manager_reject"
+                       sourceRef="gatewayManager"
+                       targetRef="managerDecisionTask">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${managerDecision == 'REJECT'}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+    <!-- RETRY -->
+    <bpmn:sequenceFlow id="flow_manager_retry"
+                       sourceRef="gatewayManager"
+                       targetRef="managerDecisionTask">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${managerDecision == 'RETRY'}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+    <!-- FINAL MANAGER GATEWAY -->
+    <bpmn:exclusiveGateway id="gatewayManagerFinal"/>
+
+    <bpmn:sequenceFlow id="flow_manager_task_gateway"
+                       sourceRef="managerDecisionTask"
+                       targetRef="gatewayManagerFinal"/>
+
+    <!-- END EVENTS -->
+    <bpmn:endEvent id="endManagerResolved"
+                   name="Resolved by Manager"/>
+
+    <bpmn:endEvent id="endRejected"
+                   name="Rejected"/>
+
+    <!-- FINAL RESOLVE -->
+    <bpmn:sequenceFlow id="flow_manager_final_resolve"
+                       sourceRef="gatewayManagerFinal"
+                       targetRef="endManagerResolved">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${managerDecision == 'RESOLVE'}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+    <!-- FINAL REJECT -->
+    <bpmn:sequenceFlow id="flow_manager_final_reject"
+                       sourceRef="gatewayManagerFinal"
+                       targetRef="endRejected">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${managerDecision == 'REJECT'}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+    <!-- FINAL RETRY -->
+    <bpmn:sequenceFlow id="flow_manager_final_retry"
+                       sourceRef="gatewayManagerFinal"
+                       targetRef="vendorAssign">
+
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        ${managerDecision == 'RETRY'}
+      </bpmn:conditionExpression>
+
+    </bpmn:sequenceFlow>
+
+  </bpmn:process>
+
+</bpmn:definitions>

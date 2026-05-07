@@ -1,0 +1,144 @@
+{
+  "fields": [
+    {
+      "fieldName": "complaintTitle",
+      "label": "Complaint Title",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "fieldName": "issueCategory",
+      "label": "Issue Category",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "Battery",
+        "Charging",
+        "Motor",
+        "Vehicle Hardware",
+        "Software / App",
+        "Connectivity",
+        "Other"
+      ]
+    },
+    {
+      "fieldName": "issueDescription",
+      "label": "Issue Description",
+      "type": "textarea",
+      "required": true,
+      "options": []
+    },
+
+    {
+      "fieldName": "vehicleId",
+      "label": "Vehicle ID",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "fieldName": "vehicleNumber",
+      "label": "Vehicle Registration Number",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "fieldName": "vehicleModel",
+      "label": "Vehicle Model",
+      "type": "text",
+      "required": false,
+      "options": []
+    },
+    {
+      "fieldName": "driverName",
+      "label": "Driver Name",
+      "type": "text",
+      "required": false,
+      "options": []
+    },
+    {
+      "fieldName": "driverContact",
+      "label": "Driver Contact",
+      "type": "text",
+      "required": false,
+      "options": []
+    },
+
+    {
+      "fieldName": "batteryLevel",
+      "label": "Battery Level (%) at Issue Time",
+      "type": "number",
+      "required": true,
+      "options": []
+    },
+    {
+      "fieldName": "chargingStatus",
+      "label": "Charging Status",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "Charging",
+        "Not Charging",
+        "Fully Charged",
+        "Charging Interrupted"
+      ]
+    },
+
+    {
+      "fieldName": "location",
+      "label": "Current Location",
+      "type": "text",
+      "required": true,
+      "options": []
+    },
+    {
+      "fieldName": "issueLocationType",
+      "label": "Location Type",
+      "type": "dropdown",
+      "required": false,
+      "options": [
+        "On Road",
+        "Charging Station",
+        "Parking Area",
+        "Service Center"
+      ]
+    },
+
+    {
+      "fieldName": "issueDate",
+      "label": "Issue Date & Time",
+      "type": "datetime",
+      "required": true,
+      "options": []
+    },
+    {
+      "fieldName": "reportedBy",
+      "label": "Reported By",
+      "type": "dropdown",
+      "required": true,
+      "options": [
+        "Driver",
+        "Fleet Manager",
+        "Admin"
+      ]
+    },
+
+    {
+      "fieldName": "attachment",
+      "label": "Upload Image / Video",
+      "type": "file",
+      "required": false,
+      "options": []
+    },
+
+    {
+      "fieldName": "remarks",
+      "label": "Additional Remarks",
+      "type": "textarea",
+      "required": false,
+      "options": []
+    }
+  ]
+}
