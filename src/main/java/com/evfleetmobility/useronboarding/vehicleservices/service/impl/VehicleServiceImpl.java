@@ -23,10 +23,14 @@ public class VehicleServiceImpl implements VehicleService {
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
 
-    @Override
+@Override
     public VehicleResponse addVehicle(VehicleRequest request) {
-        User user = userRepository.findById(request.getUserId())
+        // User user = userRepo.findById(request.getUserId())
+        User user = null;
+        if (request.getUserId() != null) {
+            user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + request.getUserId()));
+        }
 
         Vehicle vehicle = new Vehicle();
         vehicle.setUser(user);
@@ -34,6 +38,7 @@ public class VehicleServiceImpl implements VehicleService {
         vehicle.setModel(request.getModel());
         vehicle.setLicensePlate(request.getLicensePlate());
         vehicle.setVin(request.getVin());
+        vehicle.setChassisNo(request.getChassisNo());
         if (request.getStatus() != null) {
             try {
                 vehicle.setStatus(VehicleStatus.valueOf(request.getStatus().toUpperCase()));
@@ -60,6 +65,7 @@ public class VehicleServiceImpl implements VehicleService {
         if (request.getModel() != null) vehicle.setModel(request.getModel());
         if (request.getLicensePlate() != null) vehicle.setLicensePlate(request.getLicensePlate());
         if (request.getVin() != null) vehicle.setVin(request.getVin());
+        if (request.getChassisNo() != null) vehicle.setChassisNo(request.getChassisNo());
         if (request.getStatus() != null) {
             try {
                 vehicle.setStatus(VehicleStatus.valueOf(request.getStatus().toUpperCase()));
@@ -106,6 +112,7 @@ public class VehicleServiceImpl implements VehicleService {
         response.setStatus(vehicle.getStatus() != null ? vehicle.getStatus().name() : null);
         response.setYearOfManufacture(vehicle.getYearOfManufacture());
         response.setBatteryCapacityKwh(vehicle.getBatteryCapacityKwh());
+        response.setChassisNo(vehicle.getChassisNo());
         return response;
     }
 }

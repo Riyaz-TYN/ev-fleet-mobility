@@ -9,6 +9,7 @@ public class VehicleRequest {
     private String status;
     private Integer yearOfManufacture;
     private Double batteryCapacityKwh;
+    private String chassisNo;
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
@@ -26,6 +27,9 @@ public class VehicleRequest {
     public void setYearOfManufacture(Integer yearOfManufacture) { this.yearOfManufacture = yearOfManufacture; }
     public Double getBatteryCapacityKwh() { return batteryCapacityKwh; }
     public void setBatteryCapacityKwh(Double batteryCapacityKwh) { this.batteryCapacityKwh = batteryCapacityKwh; }
+    public String getChassisNo() {return chassisNo;}
+    public void setChassisNo(String chassisNo) {this.chassisNo = chassisNo; }
+
 }
 
 

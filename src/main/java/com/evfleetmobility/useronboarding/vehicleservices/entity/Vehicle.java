@@ -17,6 +17,7 @@ public class Vehicle {
     private String model;
     private String licensePlate;
     private String vin;
+    private String chassisNo;
 
     @Enumerated(EnumType.STRING)
     private VehicleStatus status;
@@ -25,7 +26,7 @@ public class Vehicle {
     private Double batteryCapacityKwh;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -60,6 +61,9 @@ public class Vehicle {
 
     public List<ServiceHistory> getServiceHistories() { return serviceHistories; }
     public void setServiceHistories(List<ServiceHistory> serviceHistories) { this.serviceHistories = serviceHistories; }
+
+    public String getChassisNo() { return chassisNo; }
+    public void setChassisNo(String chassisNo) { this.chassisNo = chassisNo; }
 }
 
 

@@ -10,6 +10,7 @@ public class VehicleResponse {
     private String status;
     private Integer yearOfManufacture;
     private Double batteryCapacityKwh;
+    private String chassisNo;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -29,6 +30,8 @@ public class VehicleResponse {
     public void setYearOfManufacture(Integer yearOfManufacture) { this.yearOfManufacture = yearOfManufacture; }
     public Double getBatteryCapacityKwh() { return batteryCapacityKwh; }
     public void setBatteryCapacityKwh(Double batteryCapacityKwh) { this.batteryCapacityKwh = batteryCapacityKwh; }
+    public String getChassisNo() {return chassisNo;}
+    public void setChassisNo(String chassisNo) {this.chassisNo = chassisNo;}
 }
 
 

@@ -34,6 +34,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
 
     @Override
+    @Transactional
     public UserResponse signup(SignupRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {

@@ -58,7 +58,7 @@ public class IndividualDetails {
     @Column(name = "vendor_availability", nullable = false)
     private Boolean vendorAvailability = false;
 
-    @Column(name = "expertise", nullable = true)
+    @Column(name = "expertise")
     private String expertise;
 
     public Long getId() { return id; }
