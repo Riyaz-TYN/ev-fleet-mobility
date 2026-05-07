@@ -85,7 +85,7 @@ public class ComplaintController {
 
     // COMPLAINT DETAILS
     @PostMapping("/details")
-    @PreAuthorize("hasAnyRole('USER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getComplaintDetails(
             @RequestBody ComplaintDetailsRequestDTO request
     ) {
