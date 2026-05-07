@@ -1,12 +1,12 @@
-package com.evfleetmobility.complaintresolution.vendor.controller;
+package com.evfleetmobility.complaintresolution.complaintservices.vendor.controller;
 
-import com.evfleetmobility.complaintresolution.vendor.entity.Vendor;
-import com.evfleetmobility.complaintresolution.vendor.service.VendorService;
+import com.evfleetmobility.complaintresolution.complaintservices.vendor.entity.Vendor;
+import com.evfleetmobility.complaintresolution.complaintservices.vendor.service.VendorService;
 import org.springframework.web.bind.annotation.*;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
-import com.evfleetmobility.complaintresolution.vendor.dto.VendorStatusUpdateDTO;
+import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorStatusUpdateDTO;
 import java.util.List;
-import com.evfleetmobility.complaintresolution.vendor.dto.VendorResolveRequestDTO;
+import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorResolveRequestDTO;
 @RestController
 @RequestMapping("/api/vendors")
 @CrossOrigin("*")

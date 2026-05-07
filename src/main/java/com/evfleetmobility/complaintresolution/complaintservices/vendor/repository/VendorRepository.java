@@ -1,6 +1,6 @@
-package com.evfleetmobility.complaintresolution.vendor.repository;
+package com.evfleetmobility.complaintresolution.complaintservices.vendor.repository;
 
-import com.evfleetmobility.complaintresolution.vendor.entity.Vendor;
+import com.evfleetmobility.complaintresolution.complaintservices.vendor.entity.Vendor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
