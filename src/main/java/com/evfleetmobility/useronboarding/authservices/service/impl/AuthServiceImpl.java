@@ -22,6 +22,7 @@ import com.evfleetmobility.useronboarding.profileservices.repository.Organizatio
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -42,8 +43,8 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().isEmpty()) {
-            if (individualRepo.existsByPhoneNumber(request.getPhoneNumber()) ||
-                organizationRepo.existsByPhoneNumber(request.getPhoneNumber())) {
+            if (individualRepo.existsByPhoneNumber(request.getPhoneNumber())
+                    || organizationRepo.existsByPhoneNumber(request.getPhoneNumber())) {
                 throw new UserAlreadyExistsException("Phone number is already registered");
             }
         }
@@ -99,7 +100,7 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidPasswordException("Invalid password");
         }
 
-        String accessToken  = jwtUtil.generateAccessToken(user.getId(), user.getRole());
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId());
 
         return new AuthResponse(accessToken, refreshToken);
@@ -122,5 +123,3 @@ public class AuthServiceImpl implements AuthService {
         return new AuthResponse(newAccessToken, token);
     }
 }
-
-
