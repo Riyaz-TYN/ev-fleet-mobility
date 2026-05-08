@@ -2,9 +2,19 @@ package com.evfleetmobility.complaintresolution.complaintservices.vendor.dto;
 
 public class VendorResolveRequestDTO {
 
+    private Long complaintId;
+
     private Boolean resolved;
 
     private String resolutionRemarks;
+
+    public Long getComplaintId() {
+        return complaintId;
+    }
+
+    public void setComplaintId(Long complaintId) {
+        this.complaintId = complaintId;
+    }
 
     public Boolean getResolved() {
         return resolved;

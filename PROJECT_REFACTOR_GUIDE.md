@@ -1,4 +1,6 @@
-This Spring Boot project already has a fully working Complaint Resolution workflow module.
+# EV Fleet Mobility — Complaint Resolution Enterprise Refactor Guide
+
+This Spring Boot project already has a fully working Complaint Resolution workflow module. :contentReference[oaicite:0]{index=0}
 
 IMPORTANT:
 DO NOT rewrite business logic.
@@ -33,34 +35,16 @@ CURRENT PROBLEM
 
 The current complaint module structure was originally built like a standalone project.
 
-Current structure looks like:
-
-complaint_resolution
-│
-├── auditlog
-├── auth
-├── common
-├── complaint
-├── escalation
-├── manager
-├── notification
-└── vendor
-
-This structure is NOT aligned with the existing EV Fleet Mobility architecture.
-
-The existing EV Fleet Mobility modules such as:
-
-com.evfleetmobility.useronboarding
-
-already follow a clean enterprise modular structure.
-
-The complaint module must now be refactored to follow the SAME structure and standards as useronboarding.
+The complaint module must now be refactored to follow the SAME enterprise standards as:
+- useronboarding
+- common
+- centralized security architecture
 
 ====================================================
 MAIN OBJECTIVE
 ====================================================
 
-Convert the existing complaint_resolution standalone-style module into a proper enterprise EV Fleet Mobility module.
+Convert the existing complaintresolution module into a proper enterprise EV Fleet Mobility module.
 
 IMPORTANT:
 Keep all existing working services and workflow logic unchanged.
@@ -78,39 +62,16 @@ PACKAGE STANDARDIZATION
 ====================================================
 
 Rename:
-
 Complaint_Resolution
 → complaintresolution
 
 Requirements:
-- all package names lowercase
+- lowercase package names
 - remove underscores
-- use enterprise naming conventions
+- enterprise naming conventions
 
 Base package:
-
 com.evfleetmobility
-
-====================================================
-IMPORTANT STRUCTURE REQUIREMENT
-====================================================
-
-The current structure:
-
-auditlog
-auth
-common
-complaint
-vendor
-manager
-
-must NOT remain as separate standalone-style modules.
-
-The structure should become modular and aligned with:
-
-useronboarding/authservices
-useronboarding/profileservices
-useronboarding/vehicleservices
 
 ====================================================
 FINAL EXPECTED STRUCTURE
@@ -133,258 +94,223 @@ com.evfleetmobility
 │   └── adminservices
 │
 └── complaintresolution
-    │
-    ├── complaintservices
-    │   ├── controller
-    │   ├── dto
-    │   ├── entity
-    │   ├── repository
-    │   ├── service
-    │   │    └── impl
-    │   │
-    │   ├── workflow
-    │   ├── ai
-    │   ├── vendor
-    │   ├── escalation
-    │   ├── notification
-    │   └── audit
-    │
-    └── managerservices
-        ├── controller
-        ├── dto
-        └── service
-             └── impl
+│
+├── complaintservices
+│   ├── controller
+│   ├── dto
+│   ├── entity
+│   ├── repository
+│   ├── service
+│   │    └── impl
+│   ├── workflow
+│   ├── ai
+│   ├── vendor
+│   ├── escalation
+│   ├── notification
+│   └── audit
+│
+└── managerservices
+├── controller
+├── dto
+└── service
+└── impl
 
 ====================================================
-VERY IMPORTANT REFACTOR RULES
+REUSE REQUIREMENTS
 ====================================================
-
-1. DO NOT create separate:
-   - auth module
-   - common module
-   - vendorservices module
-
-2. Vendor functionality belongs INSIDE:
-   complaintservices/vendor
-
-3. complaintresolution must reuse:
-   - common module
-   - authservices
-   - vehicle services
-   - onboarding services
-
-4. DO NOT duplicate:
-   - JWT classes
-   - security configs
-   - auth entities
-   - response wrappers
-   - exception handlers
-
-====================================================
-DO NOT MODIFY WORKING BUSINESS LOGIC
-====================================================
-
-Keep existing:
-- services
-- repositories
-- BPMN delegates
-- workflow logic
-- escalation logic
-- entity relationships
-- API functionality
-
-ONLY:
-- restructure
-- standardize
-- rename packages
-- fix imports
-- clean architecture
-
-====================================================
-AUTHENTICATION & AUTHORIZATION
-====================================================
-
-Reuse existing:
-
-com.evfleetmobility.useronboarding.authservices
 
 Reuse:
-- JWT generation
-- JWT validation
-- login flow
-- authorization flow
-- RBAC handling
-- token extraction
+- common module
+- authservices
+- profileservices
+- vehicleservices
+- centralized security
+- centralized RBAC
+- onboarding entities
 
-Also reuse:
-
-com.evfleetmobility.common.security
-
-DO NOT create duplicate:
+DO NOT duplicate:
 - JwtUtil
 - JwtFilter
 - SecurityConfig
-- auth controllers
 - auth entities
+- vehicle entities
+- profile entities
+- exception handlers
+- response wrappers
+
+====================================================
+WORKFLOW REQUIREMENTS
+====================================================
+
+DO NOT modify:
+- BPMN workflow
+- delegate logic
+- workflow variables
+- escalation logic
+- AI retry logic
+- manager review logic
+- vendor assignment logic
+
+Ensure:
+- delegateExpression works
+- BPMN services autowire correctly
+- workflow execution remains unchanged
+- escalation works
+- retries work
+
+====================================================
+ENTERPRISE API SECURITY STANDARDIZATION
+====================================================
+
+## Objective
+
+The complaintresolution module is already functionally working.
+
+ONLY standardize APIs to align with EV Fleet Mobility enterprise security standards.
+
+====================================================
+SECURITY REQUIREMENT
+====================================================
+
+Sensitive identifiers must NOT be exposed in URL path variables wherever possible.
+
+Do NOT expose:
+- complaintId
+- vehicleId
+- vendorId
+- customerId
+- userId
+- taskId
+- workflowId
+- escalationId
+- status
+- priority
+
+inside URL paths.
+
+Instead:
+- move them into secure request body DTOs.
+
+====================================================
+CONTROLLERS TO STANDARDIZE
+====================================================
+
+Apply secure API restructuring for:
+- ComplaintController
+- VendorController
+- ManagerController
+- ManagerDashboardController
+- WorkflowController
+- AuditLogController
+
+====================================================
+API STANDARDIZATION RULES
+====================================================
+
+Convert APIs like:
+
+OLD:
+GET /complaints/{id}
+GET /vehicle/{vehicleId}
+PUT /complaints/{complaintId}/approve
+POST /workflow/user-response/{taskId}
+
+NEW:
+POST /complaints/details
+POST /complaints/vehicle
+PUT /complaints/approve
+POST /workflow/user-response
+
+using DTO request bodies.
+
+====================================================
+DTO RULES
+====================================================
+
+Create or reuse DTOs ONLY.
+
+DTOs may include:
+- complaintId
+- vehicleId
+- vendorId
+- taskId
+- status
+- priority
+- teamName
+- managerDecision
+- workflow actions
+
+Follow same DTO standards used in:
+- useronboarding
+- enterprise APIs
+
+====================================================
+BACKWARD COMPATIBILITY
+====================================================
+
+DO NOT remove old APIs immediately.
+
+Instead:
+- mark old APIs as @Deprecated
+- keep them temporarily
+- introduce secure DTO APIs alongside them
+
+====================================================
+CENTRALIZED AUTHENTICATION REQUIREMENT
+====================================================
+
+ComplaintController must NOT manually parse JWT.
+
+Remove:
+- JwtUtil usage in controller
+- HttpServletRequest token parsing
+- jwtUtil.extractCustomerId(token)
+
+Reuse:
+- AuthContextService
+- SecurityContextHolder
+
+Use:
+authContextService.getCurrentUserId()
+
+internally as:
+- customerId
+- driverId
+- authenticated identity
+
+Preserve:
+- DB schema
+- workflow variables
+- service signatures
+- complaint flow behavior
+
+DO NOT modify:
+- JWT structure
+- JwtFilter
+- authservices token generation
 
 ====================================================
 RBAC REQUIREMENTS
 ====================================================
 
-Use centralized RBAC.
-
-Roles:
-- CUSTOMER
-- VENDOR
-- MANAGER
-- ADMIN
-
-Use:
+Use centralized RBAC with:
 - @PreAuthorize
 - centralized JWT validation
 - shared security filters
-- role-based endpoint access
 
-====================================================
-VEHICLE DETAILS REUSE
-====================================================
+Compatibility mappings:
+- DRIVER + USER
+- VENDOR + VENDOR_ADMIN
+- ADMIN + SUPER_ADMIN
 
-Reuse existing vehicle data from:
-
-com.evfleetmobility.useronboarding.vehicleservices
-
-DO NOT create:
-- duplicate vehicle tables
-- duplicate vehicle entities
-
-Complaint module should use:
-- existing vehicle entities
-- vehicle IDs
-- vehicle ownership mapping
-- registration details
-- EV fleet data
-
-====================================================
-USER DATA REUSE
-====================================================
-
-Reuse:
-- authservices
-- profileservices
-
-Use existing:
-- user entities
-- profiles
-- authentication data
-- manager data
-- vendor mappings
-- RBAC roles
-
-DO NOT duplicate:
-- user tables
-- auth tables
-- profile entities
-
-====================================================
-COMMON MODULE REUSE
-====================================================
-
-Reuse everything from:
-
-com.evfleetmobility.common
-
-Use:
-- configs
-- security
-- response wrappers
-- exception handling
-- utilities
-- validations
-
-DO NOT duplicate:
-- configs
-- JwtUtil
-- JwtFilter
-- SecurityConfig
-- response classes
-- exception handlers
-
-====================================================
-API STANDARDIZATION REQUIREMENT
-====================================================
-
-Read and analyze APIs inside:
-
-com.evfleetmobility.useronboarding
-
-Especially:
-- controller patterns
-- DTO naming
-- request structure
-- response structure
-- validation style
-- exception handling
-- response wrappers
-- service layering
-- RBAC implementation
-
-Then standardize ONLY complaint APIs to follow SAME standards.
-
-IMPORTANT:
-DO NOT rewrite business logic.
-
-ONLY:
-- standardize API structure
-- standardize controller style
-- standardize DTO naming
-- standardize response handling
-- standardize validations
-
-Complaint APIs should look exactly like EV Fleet Mobility native APIs.
-
-====================================================
-CAMUNDA BPM REQUIREMENTS
-====================================================
-
-The existing BPMN workflow is already functional.
-
-DO NOT rewrite workflow logic.
-
-Workflow includes:
-- AI suggestion
-- AI retry logic
-- Vendor assignment
-- Vendor resolution
-- SLA timer
-- Escalation
-- Manager review
-- Final resolution
-
-Ensure after refactor:
-- delegateExpression works
-- BPMN services autowire correctly
-- workflow variables work correctly
-- escalation works
-- SLA timers work
-- AI retry works
-
-====================================================
-CODE CLEANUP REQUIREMENTS
-====================================================
-
-Remove:
-- duplicate auth module
-- duplicate common module
-- duplicate configs
-- duplicate JWT/security logic
-- standalone remnants
-
-Also remove:
-- nested src folders
-- nested target folders
-- duplicate application.properties
-- duplicate SpringBootApplication classes
-- unused configs/files
+Apply RBAC across:
+- ComplaintController
+- VendorController
+- ManagerController
+- ManagerDashboardController
+- WorkflowController
+- AuditLogController
+- ConfigController
 
 ====================================================
 SPRING BOOT REQUIREMENTS
@@ -399,68 +325,51 @@ Ensure:
 - services autowire properly
 
 ====================================================
-LAYERED ARCHITECTURE
+FINAL CLEANUP REQUIREMENTS
 ====================================================
 
-Maintain strict enterprise layering:
+Verify/remove only if safe:
+- ComplaintResolutionApplication
+- duplicate standalone remnants
+- duplicate security configs
+- duplicate application.properties
+- nested src folders
+- nested target folders
 
-- controller
-- dto
-- entity
-- repository
-- service
-- service.impl
-
-Controllers:
-- request/response only
-
-Services:
-- business logic only
-
-Repositories:
-- DB access only
-
-DTOs:
-- API communication only
-
-Entities:
-- JPA persistence models only
+Ensure:
+- single enterprise startup entrypoint
+- centralized component scanning
+- no startup ambiguity
 
 ====================================================
-IMPORTANT EXECUTION RULE
+FINAL VALIDATION
 ====================================================
 
-Perform SAFE incremental refactoring.
-
-After each refactor:
-- fix imports
-- ensure project compiles
-- preserve workflow execution
-- preserve existing APIs
-
-DO NOT perform large uncontrolled rewrites.
+Ensure:
+- Maven compile succeeds
+- application startup succeeds
+- workflow execution unchanged
+- no BPMN behavior changes
+- no Camunda bean issues
+- no runtime RBAC conflicts
+- no runtime auth conflicts
 
 ====================================================
 EXPECTED FINAL OUTCOME
 ====================================================
 
-The complaintresolution module should become a proper native EV Fleet Mobility enterprise module.
+The complaintresolution module should become:
+- enterprise structured
+- production-ready
+- secure
+- standardized
+- modular
+- scalable
 
-Final result should include:
-- clean modular architecture
-- lowercase standardized packages
-- centralized security
-- centralized RBAC
-- reuse onboarding services
-- reuse vehicle services
-- reuse authservices
-- reuse common configs
-- BPMN workflow fully integrated
-- SLA escalation working
-- AI retry flow working
-- no duplicate configs
-- no standalone remnants
-- maintainable scalable architecture
-- production-ready codebase
-- APIs aligned with useronboarding standards
-- existing workflow/business logic preserved completely
+while preserving:
+- existing APIs
+- workflow execution
+- BPMN behavior
+- escalation logic
+- AI retry logic
+- business functionality

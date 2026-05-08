@@ -7,11 +7,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 /**
  * Controller to expose API for frontend
  */
 @RestController
 @RequestMapping("/api/config")
+@PreAuthorize("hasAnyRole('USER','DRIVER','VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
 public class ConfigController {
 
     @Autowired

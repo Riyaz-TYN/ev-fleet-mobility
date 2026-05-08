@@ -2,7 +2,9 @@ package com.evfleetmobility.complaintresolution.complaint.controller;
 
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
+import com.evfleetmobility.complaintresolution.complaint.dto.WorkflowTaskRequestDTO;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +20,34 @@ public class WorkflowController {
         this.taskService = taskService;
     }
 
+    @PostMapping("/user-response")
+    @PreAuthorize("hasAnyRole('USER','DRIVER')")
+    public String submitUserResponseDTO(
+            @RequestBody WorkflowTaskRequestDTO request
+    ) {
+        Task task = taskService.createTaskQuery()
+                .taskId(request.getTaskId())
+                .singleResult();
+
+        if (task == null) {
+            return "Task not found";
+        }
+
+        Boolean resolved = request.getResolved() != null ? request.getResolved() : false;
+        Boolean continueAi = request.getContinueAi() != null ? request.getContinueAi() : false;
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("resolved", resolved);
+        variables.put("continueAi", continueAi);
+
+        taskService.complete(request.getTaskId(), variables);
+
+        return "User response submitted successfully";
+    }
+
+    @Deprecated
     @PostMapping("/user-response/{taskId}")
+    @PreAuthorize("hasAnyRole('USER','DRIVER')")
     public String submitUserResponse(
             @PathVariable String taskId,
             @RequestBody Map<String, Object> request
@@ -48,7 +77,32 @@ public class WorkflowController {
         return "User response submitted successfully";
     }
 
+    @PostMapping("/vendor-response")
+    @PreAuthorize("hasAnyRole('VENDOR','VENDOR_ADMIN')")
+    public String submitVendorResponseDTO(
+            @RequestBody WorkflowTaskRequestDTO request
+    ) {
+        Task task = taskService.createTaskQuery()
+                .taskId(request.getTaskId())
+                .singleResult();
+
+        if (task == null) {
+            return "Task not found";
+        }
+
+        Boolean vendorResolved = request.getVendorResolved() != null ? request.getVendorResolved() : false;
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("vendorResolved", vendorResolved);
+
+        taskService.complete(request.getTaskId(), variables);
+
+        return "Vendor response submitted successfully";
+    }
+
+    @Deprecated
     @PostMapping("/vendor-response/{taskId}")
+    @PreAuthorize("hasAnyRole('VENDOR','VENDOR_ADMIN')")
     public String submitVendorResponse(
             @PathVariable String taskId,
             @RequestBody Map<String, Object> request
@@ -73,7 +127,32 @@ public class WorkflowController {
         return "Vendor response submitted successfully";
     }
 
+    @PostMapping("/manager-response")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+    public String submitManagerResponseDTO(
+            @RequestBody WorkflowTaskRequestDTO request
+    ) {
+        Task task = taskService.createTaskQuery()
+                .taskId(request.getTaskId())
+                .singleResult();
+
+        if (task == null) {
+            return "Task not found";
+        }
+
+        String managerDecision = request.getManagerDecision() != null ? request.getManagerDecision() : "RETRY";
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("managerDecision", managerDecision);
+
+        taskService.complete(request.getTaskId(), variables);
+
+        return "Manager response submitted successfully";
+    }
+
+    @Deprecated
     @PostMapping("/manager-response/{taskId}")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public String submitManagerResponse(
             @PathVariable String taskId,
             @RequestBody Map<String, Object> request

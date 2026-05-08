@@ -2,13 +2,19 @@ package com.evfleetmobility.complaintresolution.auditlog.controller;
 
 import com.evfleetmobility.complaintresolution.auditlog.entity.AuditLog;
 import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
+import com.evfleetmobility.complaintresolution.complaint.dto.AuditLogRequestDTO;
+import com.evfleetmobility.complaintresolution.complaint.dto.AuditLogActionRequestDTO;
+import com.evfleetmobility.complaintresolution.complaint.dto.VehicleComplaintRequestDTO;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @RestController
 @RequestMapping("/api/audit-logs")
 @CrossOrigin(origins = "*")
+@PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
 public class AuditLogController {
 
     private final AuditLogService auditLogService;
@@ -17,17 +23,38 @@ public class AuditLogController {
         this.auditLogService = auditLogService;
     }
 
+    // ✅ Fetch logs by complaintId (NEW)
+    @PostMapping("/complaint")
+    public List<AuditLog> getLogsByComplaintIdDTO(@RequestBody AuditLogRequestDTO request) {
+        return auditLogService.getLogsByComplaintId(request.getComplaintId());
+    }
+
+    @Deprecated
     @GetMapping("/complaint/{complaintId}")
     public List<AuditLog> getLogsByComplaintId(@PathVariable Long complaintId) {
         return auditLogService.getLogsByComplaintId(complaintId);
     }
 
-    // ✅ Fetch logs by action
+    // ✅ Fetch logs by action (NEW)
+    @PostMapping("/action")
+    public List<AuditLog> getLogsByActionDTO(@RequestBody AuditLogActionRequestDTO request) {
+        return auditLogService.getLogsByAction(request.getAction());
+    }
+
+    // ✅ Fetch logs by action (OLD)
+    @Deprecated
     @GetMapping("/action/{action}")
     public List<AuditLog> getLogsByAction(@PathVariable String action) {
         return auditLogService.getLogsByAction(action);
     }
 
+    // ✅ Fetch logs by vehicleId (NEW)
+    @PostMapping("/vehicle")
+    public List<AuditLog> getLogsByVehicleIdDTO(@RequestBody VehicleComplaintRequestDTO request) {
+        return auditLogService.getLogsByVehicleId(request.getVehicleId());
+    }
+
+    @Deprecated
     @GetMapping("/vehicle/{vehicleId}")
     public List<AuditLog> getLogsByVehicleId(@PathVariable String vehicleId) {
         return auditLogService.getLogsByVehicleId(vehicleId);

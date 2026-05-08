@@ -2,7 +2,16 @@ package com.evfleetmobility.complaintresolution.complaintservices.vendor.dto;
 
 public class VendorStatusUpdateDTO {
 
+    private Long complaintId;
     private String status;
+
+    public Long getComplaintId() {
+        return complaintId;
+    }
+
+    public void setComplaintId(Long complaintId) {
+        this.complaintId = complaintId;
+    }
 
     public String getStatus() {
         return status;

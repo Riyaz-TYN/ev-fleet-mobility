@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @RestController
 @RequestMapping("/api/manager")
 @CrossOrigin("*")
+@PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
 public class ManagerController {
 
     @Autowired
@@ -36,7 +39,21 @@ public class ManagerController {
                 .getEscalatedComplaintsForManager();
     }
 
-    // ✅ MANAGER DECISION
+    // MANAGER DECISION (NEW)
+    @PutMapping("/complaints/decision")
+    public String managerDecision(
+            @RequestBody
+            ManagerDecisionRequestDTO request
+    ) {
+
+        return managerService.managerDecision(
+                request.getComplaintId(),
+                request.getManagerDecision()
+        );
+    }
+
+    // MANAGER DECISION (OLD)
+    @Deprecated
     @PutMapping("/complaints/{complaintId}/decision")
     public String managerDecision(
 

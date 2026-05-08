@@ -1,7 +1,7 @@
 package com.evfleetmobility.complaintresolution.complaint.controller;
 
 import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
-import com.evfleetmobility.common.security.JwtUtil;
+import com.evfleetmobility.common.security.AuthContextService;
 import com.evfleetmobility.complaintresolution.complaint.dto.AuditLogRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintActionRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintDetailsRequestDTO;
@@ -11,7 +11,7 @@ import com.evfleetmobility.complaintresolution.complaint.dto.VehicleComplaintReq
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.complaintresolution.complaint.service.ComplaintService;
 
-import jakarta.servlet.http.HttpServletRequest;
+
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,41 +25,28 @@ import java.util.List;
 public class ComplaintController {
 
     private final ComplaintService complaintService;
-    private final JwtUtil jwtUtil;
+    private final AuthContextService authContextService;
     private final AuditLogService auditLogService;
 
     public ComplaintController(
             ComplaintService complaintService,
-            JwtUtil jwtUtil,
+            AuthContextService authContextService,
             AuditLogService auditLogService
     ) {
         this.complaintService = complaintService;
-        this.jwtUtil = jwtUtil;
+        this.authContextService = authContextService;
         this.auditLogService = auditLogService;
     }
 
     // CREATE COMPLAINT
     @PostMapping
+    @PreAuthorize("hasAnyRole('USER','DRIVER')")
     public String saveComplaint(
-            @RequestBody ComplaintRequestDTO request,
-            HttpServletRequest httpRequest
+            @RequestBody ComplaintRequestDTO request
     ) {
 
         try {
-
-            String authHeader =
-                    httpRequest.getHeader("Authorization");
-
-            if (authHeader == null ||
-                    !authHeader.startsWith("Bearer ")) {
-
-                return "Error: Missing or invalid Authorization header";
-            }
-
-            String token = authHeader.substring(7);
-
-            String customerId =
-                    jwtUtil.extractCustomerId(token);
+            String customerId = authContextService.getCurrentUserId();
 
             return complaintService.saveComplaint(
                     request,
@@ -76,7 +63,7 @@ public class ComplaintController {
 
     // UNIFIED GET COMPLAINTS
     @GetMapping
-    @PreAuthorize("hasAnyRole('USER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('USER','DRIVER','VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getComplaints() {
 
         return ResponseEntity.ok(
@@ -86,7 +73,7 @@ public class ComplaintController {
 
     // COMPLAINT DETAILS
     @PostMapping("/details")
-    @PreAuthorize("hasAnyRole('USER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('USER','DRIVER','VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getComplaintDetails(
             @RequestBody ComplaintDetailsRequestDTO request
     ) {
@@ -114,7 +101,7 @@ public class ComplaintController {
 
     // VEHICLE FILTER
     @PostMapping("/vehicle")
-    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getComplaintsByVehicle(
             @RequestBody VehicleComplaintRequestDTO request
     ) {
@@ -128,7 +115,7 @@ public class ComplaintController {
 
     // CENTRALIZED ACTION API
     @PostMapping("/action")
-    @PreAuthorize("hasAnyRole('USER','VENDOR_ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('USER','DRIVER','VENDOR','VENDOR_ADMIN','MANAGER')")
     public ResponseEntity<?> handleComplaintAction(
             @RequestBody ComplaintActionRequestDTO request
     ) {
@@ -159,27 +146,11 @@ public class ComplaintController {
     // MY COMPLAINTS
     @Deprecated
     @GetMapping("/my-complaints")
-    public List<Complaint> getMyComplaints(
-            HttpServletRequest request
-    ) {
+    @PreAuthorize("hasAnyRole('USER','DRIVER')")
+    public List<Complaint> getMyComplaints() {
 
         try {
-
-            String authHeader =
-                    request.getHeader("Authorization");
-
-            if (authHeader == null ||
-                    !authHeader.startsWith("Bearer ")) {
-
-                throw new RuntimeException(
-                        "Missing or invalid Authorization header"
-                );
-            }
-
-            String token = authHeader.substring(7);
-
-            String customerId =
-                    jwtUtil.extractCustomerId(token);
+            String customerId = authContextService.getCurrentUserId();
 
             return complaintService.getMyComplaints(
                     customerId
@@ -199,6 +170,7 @@ public class ComplaintController {
     // GET VEHICLE COMPLAINTS
     @Deprecated
     @GetMapping("/vehicle/{vehicleId}")
+    @PreAuthorize("hasAnyRole('VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public List<Complaint> getComplaintsByVehicleId(
             @PathVariable String vehicleId
     ) {
@@ -210,6 +182,7 @@ public class ComplaintController {
     // GET ALL COMPLAINTS
     @Deprecated
     @GetMapping("/all")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public List<Complaint> getAllComplaints() {
 
         return complaintService.getAllComplaints();
@@ -218,6 +191,7 @@ public class ComplaintController {
     // GET COMPLAINT BY ID
     @Deprecated
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','DRIVER','VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public Complaint getComplaintById(
             @PathVariable Long id
     ) {
@@ -228,6 +202,7 @@ public class ComplaintController {
     // STATUS FILTER
     @Deprecated
     @GetMapping("/status/{status}")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public List<Complaint> getComplaintsByStatus(
             @PathVariable String status
     ) {
@@ -239,6 +214,7 @@ public class ComplaintController {
     // PRIORITY FILTER
     @Deprecated
     @GetMapping("/priority/{priority}")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public List<Complaint> getComplaintsByPriority(
             @PathVariable String priority
     ) {
