@@ -3,25 +3,27 @@ package com.evfleetmobility.complaintresolution.complaint.controller;
 import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 import com.evfleetmobility.common.security.AuthContextService;
 import com.evfleetmobility.complaintresolution.complaint.dto.AuditLogRequestDTO;
-import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintActionRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintDetailsRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintStatusRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.dto.VehicleComplaintRequestDTO;
-import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.complaintresolution.complaint.service.ComplaintService;
-
-
+import com.evfleetmobility.complaintresolution.manager.dto.ManagerApproveRequestDTO;
+import com.evfleetmobility.complaintresolution.manager.dto.ManagerDecisionRequestDTO;
+import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorIdRequestDTO;
+import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorNameRequestDTO;
+import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorResolveRequestDTO;
+import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorStatusUpdateDTO;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+// Note: @CrossOrigin removed — CORS is handled globally in SecurityConfig via CorsConfigurationSource
+// Roles in this system: DRIVER, VENDOR_ADMIN, MANAGER, ADMIN, SUPER_ADMIN
 
 @RestController
 @RequestMapping("/api/complaints")
-@CrossOrigin("*")
 public class ComplaintController {
 
     private final ComplaintService complaintService;
@@ -38,188 +40,221 @@ public class ComplaintController {
         this.auditLogService = auditLogService;
     }
 
+    // =========================================================
     // CREATE COMPLAINT
+    // Role: DRIVER
+    // =========================================================
     @PostMapping
-    @PreAuthorize("hasAnyRole('USER','DRIVER')")
-    public String saveComplaint(
+    @PreAuthorize("hasRole('DRIVER')")
+    public ResponseEntity<String> saveComplaint(
             @RequestBody ComplaintRequestDTO request
     ) {
-
-        try {
-            String customerId = authContextService.getCurrentUserId();
-
-            return complaintService.saveComplaint(
-                    request,
-                    customerId
-            );
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            return "Error: " + e.getMessage();
-        }
+        String customerId = authContextService.getCurrentUserId().toString();
+        String result = complaintService.saveComplaint(request, customerId);
+        return ResponseEntity.ok(result);
     }
 
-    // UNIFIED GET COMPLAINTS
+    // =========================================================
+    // GET COMPLAINTS (ROLE-BASED — single endpoint, smart filter)
+    //   DRIVER       -> their own complaints (by customerId)
+    //   VENDOR_ADMIN -> complaints assigned to their team
+    //   MANAGER      -> escalated complaints (ESCALATED_TO_MANAGER)
+    //   ADMIN        -> all complaints
+    //   SUPER_ADMIN  -> all complaints
+    // =========================================================
     @GetMapping
-    @PreAuthorize("hasAnyRole('USER','DRIVER','VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getComplaints() {
-
-        return ResponseEntity.ok(
-                complaintService.getComplaints()
-        );
+        return ResponseEntity.ok(complaintService.getComplaints());
     }
 
-    // COMPLAINT DETAILS
+    // =========================================================
+    // GET COMPLAINT DETAILS
+    // Roles: all roles
+    // =========================================================
     @PostMapping("/details")
-    @PreAuthorize("hasAnyRole('USER','DRIVER','VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getComplaintDetails(
             @RequestBody ComplaintDetailsRequestDTO request
     ) {
-
         return ResponseEntity.ok(
-                complaintService.getComplaintDetails(
-                        request.getComplaintId()
-                )
+                complaintService.getComplaintDetails(request.getComplaintId())
         );
     }
 
-    // STATUS FILTER
-    @PostMapping("/status")
+    // =========================================================
+    // FILTER BY STATUS
+    // Roles: MANAGER, ADMIN, SUPER_ADMIN
+    // =========================================================
+    @PostMapping("/filter/status")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<?> getComplaintStatus(
+    public ResponseEntity<?> getComplaintsByStatus(
             @RequestBody ComplaintStatusRequestDTO request
     ) {
-
         return ResponseEntity.ok(
-                complaintService.getComplaintStatus(
-                        request.getStatus()
-                )
+                complaintService.getComplaintStatus(request.getStatus())
         );
     }
 
-    // VEHICLE FILTER
-    @PostMapping("/vehicle")
-    @PreAuthorize("hasAnyRole('VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+    // =========================================================
+    // FILTER BY VEHICLE
+    // Roles: VENDOR_ADMIN, MANAGER, ADMIN, SUPER_ADMIN
+    // =========================================================
+    @PostMapping("/filter/vehicle")
+    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getComplaintsByVehicle(
             @RequestBody VehicleComplaintRequestDTO request
     ) {
-
         return ResponseEntity.ok(
-                complaintService.getComplaintsByVehicle(
-                        request.getVehicleId()
-                )
+                complaintService.getComplaintsByVehicle(request.getVehicleId())
         );
     }
 
-    // CENTRALIZED ACTION API
-    @PostMapping("/action")
-    @PreAuthorize("hasAnyRole('USER','DRIVER','VENDOR','VENDOR_ADMIN','MANAGER')")
-    public ResponseEntity<?> handleComplaintAction(
-            @RequestBody ComplaintActionRequestDTO request
-    ) {
-
-        return ResponseEntity.ok(
-                complaintService.handleComplaintAction(request)
-        );
-    }
-
+    // =========================================================
     // AUDIT LOGS
+    // Roles: ADMIN, SUPER_ADMIN
+    // =========================================================
     @PostMapping("/audit-logs")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getAuditLogs(
             @RequestBody AuditLogRequestDTO request
     ) {
-
         return ResponseEntity.ok(
-                auditLogService.getLogsByComplaintId(
-                        request.getComplaintId()
+                auditLogService.getLogsByComplaintId(request.getComplaintId())
+        );
+    }
+
+    // =========================================================
+    // VENDOR_ADMIN: GET ASSIGNED COMPLAINTS BY TEAM NAME
+    // Replaces: POST /api/vendors/complaints
+    // Roles: VENDOR_ADMIN, MANAGER, ADMIN, SUPER_ADMIN
+    // =========================================================
+    @PostMapping("/assigned")
+    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<?> getAssignedComplaints(
+            @RequestBody VendorNameRequestDTO request
+    ) {
+        return ResponseEntity.ok(
+                complaintService.getAssignedComplaintsByVendorName(request.getVendorName())
+        );
+    }
+
+    // =========================================================
+    // VENDOR_ADMIN: UPDATE COMPLAINT STATUS
+    // Replaces: PUT /api/vendors/complaints/status
+    // Roles: VENDOR_ADMIN, MANAGER
+    // =========================================================
+    @PutMapping("/status")
+    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER')")
+    public ResponseEntity<String> updateComplaintStatus(
+            @RequestBody VendorStatusUpdateDTO request
+    ) {
+        return ResponseEntity.ok(
+                complaintService.updateComplaintStatus(
+                        request.getComplaintId(),
+                        request.getStatus()
                 )
         );
     }
 
-    // =========================
-    // OLD APIs (TEMPORARY)
-    // =========================
-
-    // MY COMPLAINTS
-    @Deprecated
-    @GetMapping("/my-complaints")
-    @PreAuthorize("hasAnyRole('USER','DRIVER')")
-    public List<Complaint> getMyComplaints() {
-
-        try {
-            String customerId = authContextService.getCurrentUserId();
-
-            return complaintService.getMyComplaints(
-                    customerId
-            );
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            throw new RuntimeException(
-                    "Error fetching complaints: "
-                            + e.getMessage()
-            );
-        }
-    }
-
-    // GET VEHICLE COMPLAINTS
-    @Deprecated
-    @GetMapping("/vehicle/{vehicleId}")
-    @PreAuthorize("hasAnyRole('VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<Complaint> getComplaintsByVehicleId(
-            @PathVariable String vehicleId
+    // =========================================================
+    // VENDOR_ADMIN: RESOLVE COMPLAINT
+    // Replaces: PUT /api/vendors/complaints/resolve
+    // resolved=true  -> RESOLVED
+    // resolved=false -> ESCALATED_TO_MANAGER
+    // Roles: VENDOR_ADMIN, MANAGER
+    // =========================================================
+    @PutMapping("/resolve")
+    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER')")
+    public ResponseEntity<String> resolveComplaint(
+            @RequestBody VendorResolveRequestDTO request
     ) {
-
-        return complaintService
-                .getComplaintsByVehicleId(vehicleId);
+        return ResponseEntity.ok(
+                complaintService.resolveComplaint(
+                        request.getComplaintId(),
+                        request.getResolved(),
+                        request.getResolutionRemarks()
+                )
+        );
     }
 
-    // GET ALL COMPLAINTS
-    @Deprecated
-    @GetMapping("/all")
+    // =========================================================
+    // MANAGER: APPROVE AND ASSIGN COMPLAINT TO A TEAM
+    // Replaces: PUT /api/manager/complaints/approve
+    // Roles: MANAGER, ADMIN, SUPER_ADMIN
+    // =========================================================
+    @PutMapping("/assign")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<Complaint> getAllComplaints() {
-
-        return complaintService.getAllComplaints();
-    }
-
-    // GET COMPLAINT BY ID
-    @Deprecated
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('USER','DRIVER','VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
-    public Complaint getComplaintById(
-            @PathVariable Long id
+    public ResponseEntity<?> approveAndAssign(
+            @RequestBody ManagerApproveRequestDTO request
     ) {
-
-        return complaintService.getComplaintById(id);
+        return ResponseEntity.ok(
+                complaintService.approveAndAssignComplaint(
+                        request.getComplaintId(),
+                        request.getTeamName()
+                )
+        );
     }
 
-    // STATUS FILTER
-    @Deprecated
-    @GetMapping("/status/{status}")
+    // =========================================================
+    // MANAGER: REJECT COMPLAINT
+    // Replaces: PUT /api/manager/complaints/reject
+    // Roles: MANAGER, ADMIN, SUPER_ADMIN
+    // =========================================================
+    @PutMapping("/reject")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<Complaint> getComplaintsByStatus(
-            @PathVariable String status
+    public ResponseEntity<?> rejectComplaint(
+            @RequestBody ComplaintDetailsRequestDTO request
     ) {
-
-        return complaintService
-                .getComplaintsByStatus(status);
+        return ResponseEntity.ok(
+                complaintService.rejectComplaint(request.getComplaintId())
+        );
     }
 
-    // PRIORITY FILTER
-    @Deprecated
-    @GetMapping("/priority/{priority}")
+    // =========================================================
+    // MANAGER: CAMUNDA WORKFLOW DECISION
+    // Replaces: PUT /api/manager/complaints/decision
+    // decision values: "RESOLVE" | "REJECT" | "RETRY"
+    // Roles: MANAGER, ADMIN, SUPER_ADMIN
+    // =========================================================
+    @PutMapping("/decision")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<Complaint> getComplaintsByPriority(
-            @PathVariable String priority
+    public ResponseEntity<String> managerDecision(
+            @RequestBody ManagerDecisionRequestDTO request
     ) {
+        return ResponseEntity.ok(
+                complaintService.managerDecision(
+                        request.getComplaintId(),
+                        request.getManagerDecision()
+                )
+        );
+    }
 
-        return complaintService
-                .getComplaintsByPriority(priority);
+    // =========================================================
+    // MANAGER: VIEW AVAILABLE VENDORS (for assignment)
+    // Replaces: GET /api/vendors (manager view)
+    // Roles: MANAGER, ADMIN, SUPER_ADMIN
+    // =========================================================
+    @GetMapping("/vendors")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<?> getAvailableVendors() {
+        return ResponseEntity.ok(
+                complaintService.getAvailableVendors()
+        );
+    }
+
+    // =========================================================
+    // MANAGER: VIEW VENDOR DETAILS
+    // Replaces: POST /api/vendors/details (manager context)
+    // Roles: VENDOR_ADMIN, MANAGER, ADMIN, SUPER_ADMIN
+    // =========================================================
+    @PostMapping("/vendors/details")
+    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<?> getVendorDetails(
+            @RequestBody VendorIdRequestDTO request
+    ) {
+        return ResponseEntity.ok(
+                complaintService.getVendorById(request.getVendorId())
+        );
     }
 }

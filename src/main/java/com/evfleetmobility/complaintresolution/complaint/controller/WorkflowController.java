@@ -9,9 +9,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.HashMap;
 import java.util.Map;
 
+// Note: @CrossOrigin removed — CORS is handled globally in SecurityConfig via CorsConfigurationSource
 @RestController
 @RequestMapping("/api/workflow")
-@CrossOrigin("*")
 public class WorkflowController {
 
     private final TaskService taskService;
@@ -21,7 +21,7 @@ public class WorkflowController {
     }
 
     @PostMapping("/user-response")
-    @PreAuthorize("hasAnyRole('USER','DRIVER')")
+    @PreAuthorize("hasRole('DRIVER')")
     public String submitUserResponseDTO(
             @RequestBody WorkflowTaskRequestDTO request
     ) {
@@ -47,7 +47,7 @@ public class WorkflowController {
 
     @Deprecated
     @PostMapping("/user-response/{taskId}")
-    @PreAuthorize("hasAnyRole('USER','DRIVER')")
+    @PreAuthorize("hasRole('DRIVER')")
     public String submitUserResponse(
             @PathVariable String taskId,
             @RequestBody Map<String, Object> request
@@ -78,7 +78,7 @@ public class WorkflowController {
     }
 
     @PostMapping("/vendor-response")
-    @PreAuthorize("hasAnyRole('VENDOR','VENDOR_ADMIN')")
+    @PreAuthorize("hasRole('VENDOR_ADMIN')")
     public String submitVendorResponseDTO(
             @RequestBody WorkflowTaskRequestDTO request
     ) {
@@ -102,7 +102,7 @@ public class WorkflowController {
 
     @Deprecated
     @PostMapping("/vendor-response/{taskId}")
-    @PreAuthorize("hasAnyRole('VENDOR','VENDOR_ADMIN')")
+    @PreAuthorize("hasRole('VENDOR_ADMIN')")
     public String submitVendorResponse(
             @PathVariable String taskId,
             @RequestBody Map<String, Object> request

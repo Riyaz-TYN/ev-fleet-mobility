@@ -1,78 +1,14 @@
 package com.evfleetmobility.complaintresolution.manager.controller;
 
-import com.evfleetmobility.complaintresolution.manager.dto.ManagerDecisionRequestDTO;
-import com.evfleetmobility.complaintresolution.manager.service.ManagerDashboardService;
-import com.evfleetmobility.complaintresolution.manager.service.ManagerService;
+// All complaint-related endpoints previously here have been moved to:
+//   ComplaintController @ /api/complaints
+//
+// Endpoint migration:
+//   GET  /api/manager/complaints/escalated  ->  GET  /api/complaints          (RBAC: MANAGER gets escalated)
+//   PUT  /api/manager/complaints/decision   ->  PUT  /api/complaints/decision
+//   GET  /api/manager/complaints/history    ->  removed (use GET /api/complaints with ADMIN role)
+//
+// This controller is intentionally left minimal.
+// If future manager-specific non-complaint operations are needed, add them here.
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.security.access.prepost.PreAuthorize;
-
-@RestController
-@RequestMapping("/api/manager")
-@CrossOrigin("*")
-@PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-public class ManagerController {
-
-    @Autowired
-    private ManagerDashboardService managerDashboardService;
-
-    private final ManagerService managerService;
-
-    public ManagerController(
-            ManagerService managerService
-    ) {
-
-        this.managerService =
-                managerService;
-    }
-
-    @GetMapping("/complaints/escalated")
-    public List<Map<String, Object>>
-    getEscalatedComplaints() {
-
-        return managerDashboardService
-                .getEscalatedComplaintsForManager();
-    }
-
-    // MANAGER DECISION (NEW)
-    @PutMapping("/complaints/decision")
-    public String managerDecision(
-            @RequestBody
-            ManagerDecisionRequestDTO request
-    ) {
-
-        return managerService.managerDecision(
-                request.getComplaintId(),
-                request.getManagerDecision()
-        );
-    }
-
-    // MANAGER DECISION (OLD)
-    @Deprecated
-    @PutMapping("/complaints/{complaintId}/decision")
-    public String managerDecision(
-
-            @PathVariable Long complaintId,
-
-            @RequestBody
-            ManagerDecisionRequestDTO request
-    ) {
-
-        return managerService.managerDecision(
-                complaintId,
-                request.getManagerDecision()
-        );
-    }
-    @GetMapping("/complaints/history")
-    public List<Map<String, Object>>
-    getManagerHistory() {
-
-        return managerDashboardService
-                .getManagerHistory();
-    }
-}
+// Note: @CrossOrigin removed — CORS is handled globally in SecurityConfig via CorsConfigurationSource

@@ -1,53 +1,55 @@
 package com.evfleetmobility.complaintresolution.complaint.service;
 
-import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintActionRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
+import com.evfleetmobility.complaintresolution.complaintservices.vendor.entity.Vendor;
 
 import java.util.List;
 
 public interface ComplaintService {
 
-    // EXISTING COMPLAINT FLOW
-    String saveComplaint(
-            ComplaintRequestDTO request,
-            String customerId
-    );
+    // ---- USER: FILE A COMPLAINT ----
+    String saveComplaint(ComplaintRequestDTO request, String customerId);
 
-    List<Complaint> getMyComplaints(String customerId);
-
-    List<Complaint> getComplaintsByVehicleId(String vehicleId);
-
-    List<Complaint> getAllComplaints();
-
-    Complaint getComplaintById(Long id);
-
-    List<Complaint> getComplaintsByStatus(String status);
-
-    List<Complaint> getComplaintsByPriority(String priority);
-
-    String userAiDecision(
-            Long complaintId,
-            Boolean resolved,
-            Boolean continueAi
-    );
-
-    // NEW UNIFIED RBAC METHODS
-
-    // ROLE-BASED COMPLAINT FETCHING
+    // ---- ROLE-BASED: GET COMPLAINTS ----
+    // Returns complaints filtered by the caller's role automatically
     List<Complaint> getComplaints();
 
-    // COMPLAINT DETAILS
+    // ---- SHARED: COMPLAINT DETAILS ----
     Complaint getComplaintDetails(Long complaintId);
 
-    // VEHICLE FILTER
+    // ---- FILTERS ----
     List<Complaint> getComplaintsByVehicle(String vehicleId);
-
-    // STATUS FILTER
     List<Complaint> getComplaintStatus(String status);
 
-    // CENTRALIZED ACTION HANDLER
-    Object handleComplaintAction(
-            ComplaintActionRequestDTO request
-    );
+    // ---- VENDOR: ASSIGNED COMPLAINTS ----
+    List<Complaint> getAssignedComplaintsByVendorName(String vendorName);
+
+    // ---- VENDOR: UPDATE STATUS ----
+    String updateComplaintStatus(Long complaintId, String status);
+
+    // ---- VENDOR: RESOLVE (or escalate to manager) ----
+    String resolveComplaint(Long complaintId, Boolean resolved, String remarks);
+
+    // ---- MANAGER: APPROVE AND ASSIGN TO TEAM ----
+    Complaint approveAndAssignComplaint(Long complaintId, String teamName);
+
+    // ---- MANAGER: REJECT COMPLAINT ----
+    Complaint rejectComplaint(Long complaintId);
+
+    // ---- MANAGER: CAMUNDA WORKFLOW DECISION ----
+    // decision: "RESOLVE" | "REJECT" | "RETRY"
+    String managerDecision(Long complaintId, String decision);
+
+    // ---- MANAGER: VENDOR LISTING (for assignment UI) ----
+    List<Vendor> getAvailableVendors();
+    Vendor getVendorById(Long vendorId);
+
+    // ---- DEPRECATED (kept for backward compat) ----
+    List<Complaint> getMyComplaints(String customerId);
+    List<Complaint> getComplaintsByVehicleId(String vehicleId);
+    List<Complaint> getAllComplaints();
+    Complaint getComplaintById(Long id);
+    List<Complaint> getComplaintsByStatus(String status);
+    List<Complaint> getComplaintsByPriority(String priority);
 }
