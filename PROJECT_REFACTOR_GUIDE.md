@@ -1,375 +1,348 @@
-# EV Fleet Mobility — Complaint Resolution Enterprise Refactor Guide
+PROJECT CONTEXT — EV Fleet Mobility Complaint Resolution System
 
-This Spring Boot project already has a fully working Complaint Resolution workflow module. :contentReference[oaicite:0]{index=0}
+Read PROJECT_REFACTOR_GUIDE.md first before making any changes.
 
-IMPORTANT:
-DO NOT rewrite business logic.
-DO NOT rewrite workflow logic.
-DO NOT break existing functionality.
+==================================================
+PROJECT OVERVIEW
+================
 
-Everything below is already working:
-- Camunda BPM workflow
-- AI suggestion flow
-- Vendor assignment flow
-- Escalation flow
-- SLA timers
-- Manager review flow
-- APIs
-- Services
-- Repositories
-- BPMN delegates
-- Workflow execution
+This is an enterprise EV Fleet Mobility platform built using:
 
-The goal is ONLY:
-- refactor
-- standardize
-- restructure
-- align architecture with EV Fleet Mobility standards
-- reuse existing modules
-- standardize APIs
-- clean enterprise structure
+* Spring Boot
+* Camunda BPM
+* JWT Authentication
+* RBAC Security
+* Modular Monolith Architecture
 
-====================================================
-CURRENT PROBLEM
-====================================================
+Main modules:
 
-The current complaint module structure was originally built like a standalone project.
+* useronboarding
+* complaintresolution
+* vehicleservices
+* authservices
 
-The complaint module must now be refactored to follow the SAME enterprise standards as:
-- useronboarding
-- common
-- centralized security architecture
+Complaint Resolution workflow is already fully integrated and working.
 
-====================================================
-MAIN OBJECTIVE
-====================================================
+==================================================
+CURRENT WORKING FLOW
+====================
 
-Convert the existing complaintresolution module into a proper enterprise EV Fleet Mobility module.
+Current BPMN:
+complaint-workflow.bpmn
+
+Existing workflow stages:
+
+1. Driver submits complaint
+2. Complaint saved
+3. Camunda workflow starts
+4. AIServiceImpl delegate executes
+5. AI retry flow
+6. Vendor assignment flow
+7. Vendor resolution flow
+8. SLA escalation flow
+9. Manager review flow
+10. Final resolution/retry flow
 
 IMPORTANT:
-Keep all existing working services and workflow logic unchanged.
+DO NOT CHANGE:
 
-ONLY:
-- restructure packages
-- rename packages
-- standardize APIs
-- reuse shared modules
-- clean architecture
-- align folder structure with useronboarding standards
+* BPMN flow
+* workflow variable names
+* escalation logic
+* retry logic
+* delegateExpression names
+* vendor flow
+* manager flow
 
-====================================================
-PACKAGE STANDARDIZATION
-====================================================
+==================================================
+CURRENT SECURITY ARCHITECTURE
+=============================
 
-Rename:
-Complaint_Resolution
-→ complaintresolution
+Already implemented:
 
-Requirements:
-- lowercase package names
-- remove underscores
-- enterprise naming conventions
+* JWT authentication
+* centralized AuthContextService
+* RBAC
+* DRIVER / USER roles
+* VENDOR / VENDOR_ADMIN roles
+* ADMIN / SUPER_ADMIN roles
 
-Base package:
-com.evfleetmobility
-
-====================================================
-FINAL EXPECTED STRUCTURE
-====================================================
-
-com.evfleetmobility
-│
-├── common
-│   ├── config
-│   ├── exception
-│   ├── response
-│   ├── security
-│   └── util
-│
-├── useronboarding
-│   ├── authservices
-│   ├── profileservices
-│   ├── vehicleservices
-│   ├── documentservices
-│   └── adminservices
-│
-└── complaintresolution
-│
-├── complaintservices
-│   ├── controller
-│   ├── dto
-│   ├── entity
-│   ├── repository
-│   ├── service
-│   │    └── impl
-│   ├── workflow
-│   ├── ai
-│   ├── vendor
-│   ├── escalation
-│   ├── notification
-│   └── audit
-│
-└── managerservices
-├── controller
-├── dto
-└── service
-└── impl
-
-====================================================
-REUSE REQUIREMENTS
-====================================================
-
-Reuse:
-- common module
-- authservices
-- profileservices
-- vehicleservices
-- centralized security
-- centralized RBAC
-- onboarding entities
-
-DO NOT duplicate:
-- JwtUtil
-- JwtFilter
-- SecurityConfig
-- auth entities
-- vehicle entities
-- profile entities
-- exception handlers
-- response wrappers
-
-====================================================
-WORKFLOW REQUIREMENTS
-====================================================
-
-DO NOT modify:
-- BPMN workflow
-- delegate logic
-- workflow variables
-- escalation logic
-- AI retry logic
-- manager review logic
-- vendor assignment logic
-
-Ensure:
-- delegateExpression works
-- BPMN services autowire correctly
-- workflow execution remains unchanged
-- escalation works
-- retries work
-
-====================================================
-ENTERPRISE API SECURITY STANDARDIZATION
-====================================================
-
-## Objective
-
-The complaintresolution module is already functionally working.
-
-ONLY standardize APIs to align with EV Fleet Mobility enterprise security standards.
-
-====================================================
-SECURITY REQUIREMENT
-====================================================
-
-Sensitive identifiers must NOT be exposed in URL path variables wherever possible.
-
-Do NOT expose:
-- complaintId
-- vehicleId
-- vendorId
-- customerId
-- userId
-- taskId
-- workflowId
-- escalationId
-- status
-- priority
-
-inside URL paths.
-
-Instead:
-- move them into secure request body DTOs.
-
-====================================================
-CONTROLLERS TO STANDARDIZE
-====================================================
-
-Apply secure API restructuring for:
-- ComplaintController
-- VendorController
-- ManagerController
-- ManagerDashboardController
-- WorkflowController
-- AuditLogController
-
-====================================================
-API STANDARDIZATION RULES
-====================================================
-
-Convert APIs like:
-
-OLD:
-GET /complaints/{id}
-GET /vehicle/{vehicleId}
-PUT /complaints/{complaintId}/approve
-POST /workflow/user-response/{taskId}
-
-NEW:
-POST /complaints/details
-POST /complaints/vehicle
-PUT /complaints/approve
-POST /workflow/user-response
-
-using DTO request bodies.
-
-====================================================
-DTO RULES
-====================================================
-
-Create or reuse DTOs ONLY.
-
-DTOs may include:
-- complaintId
-- vehicleId
-- vendorId
-- taskId
-- status
-- priority
-- teamName
-- managerDecision
-- workflow actions
-
-Follow same DTO standards used in:
-- useronboarding
-- enterprise APIs
-
-====================================================
-BACKWARD COMPATIBILITY
-====================================================
-
-DO NOT remove old APIs immediately.
-
-Instead:
-- mark old APIs as @Deprecated
-- keep them temporarily
-- introduce secure DTO APIs alongside them
-
-====================================================
-CENTRALIZED AUTHENTICATION REQUIREMENT
-====================================================
-
-ComplaintController must NOT manually parse JWT.
-
-Remove:
-- JwtUtil usage in controller
-- HttpServletRequest token parsing
-- jwtUtil.extractCustomerId(token)
-
-Reuse:
-- AuthContextService
-- SecurityContextHolder
-
-Use:
+ComplaintController already uses:
 authContextService.getCurrentUserId()
 
-internally as:
-- customerId
-- driverId
-- authenticated identity
+DO NOT rewrite security architecture.
 
-Preserve:
-- DB schema
-- workflow variables
-- service signatures
-- complaint flow behavior
+==================================================
+CURRENT VEHICLE MODULE
+======================
 
-DO NOT modify:
-- JWT structure
-- JwtFilter
-- authservices token generation
+Vehicle + Service History already exist inside:
 
-====================================================
-RBAC REQUIREMENTS
-====================================================
+com.evfleetmobility.useronboarding.vehicleservices
 
-Use centralized RBAC with:
-- @PreAuthorize
-- centralized JWT validation
-- shared security filters
+Already available:
 
-Compatibility mappings:
-- DRIVER + USER
-- VENDOR + VENDOR_ADMIN
-- ADMIN + SUPER_ADMIN
+* Vehicle entity
+* ServiceHistory entity
+* VehicleRepository
+* ServiceHistoryRepository
 
-Apply RBAC across:
-- ComplaintController
-- VendorController
-- ManagerController
-- ManagerDashboardController
-- WorkflowController
-- AuditLogController
-- ConfigController
+Vehicle belongs to authenticated user.
 
-====================================================
-SPRING BOOT REQUIREMENTS
-====================================================
+IMPORTANT:
+Frontend should NOT manually send:
 
-Ensure:
-- component scanning works
-- repository scanning works
-- dependency injection works
-- no bean conflicts
-- no circular dependencies
-- services autowire properly
+* customerId
+* vehicleId
+* serviceHistory
 
-====================================================
-FINAL CLEANUP REQUIREMENTS
-====================================================
+Backend must automatically fetch them using:
 
-Verify/remove only if safe:
-- ComplaintResolutionApplication
-- duplicate standalone remnants
-- duplicate security configs
-- duplicate application.properties
-- nested src folders
-- nested target folders
+* JWT auth
+* AuthContextService
+* VehicleRepository
+* ServiceHistoryRepository
 
-Ensure:
-- single enterprise startup entrypoint
-- centralized component scanning
-- no startup ambiguity
+==================================================
+GOAL
+====
 
-====================================================
-FINAL VALIDATION
-====================================================
+We now need REAL AI integration.
 
-Ensure:
-- Maven compile succeeds
-- application startup succeeds
-- workflow execution unchanged
-- no BPMN behavior changes
-- no Camunda bean issues
-- no runtime RBAC conflicts
-- no runtime auth conflicts
+Currently:
+AIServiceImpl uses MOCK AI response.
 
-====================================================
-EXPECTED FINAL OUTCOME
-====================================================
+We must replace ONLY the mock AI generation with external FastAPI integration.
 
-The complaintresolution module should become:
-- enterprise structured
-- production-ready
-- secure
-- standardized
-- modular
-- scalable
+==================================================
+EXTERNAL AI SERVICE
+===================
 
-while preserving:
-- existing APIs
-- workflow execution
-- BPMN behavior
-- escalation logic
-- AI retry logic
-- business functionality
+AI service is developed separately by another team using FastAPI.
+
+Our complaintresolution module acts as:
+ENTERPRISE ORCHESTRATION LAYER / GATEWAY
+
+We are responsible for:
+
+* collecting complaint context
+* collecting vehicle context
+* collecting service history
+* sending AI request
+* receiving AI response
+* managing retries
+* managing escalation
+
+We are NOT building AI logic ourselves.
+
+==================================================
+EXPECTED AI REQUEST FLOW
+========================
+
+When driver submits complaint:
+
+1. Complaint saved
+2. Workflow starts
+3. AIServiceImpl executes
+4. Backend fetches authenticated user
+5. Backend fetches user's vehicle
+6. Backend fetches service history
+7. Backend builds AI payload
+8. Backend sends request to FastAPI AI service
+9. AI response received
+10. Existing workflow continues unchanged
+
+==================================================
+EXPECTED AI REQUEST PAYLOAD
+===========================
+
+Payload structure can evolve.
+
+Current example:
+
+{
+"vehicleId": "EV-7789",
+"vehicleModel": "Tata Nexon EV",
+"title": "Vehicle not starting",
+"description": "The vehicle does not start after charging overnight",
+"issueType": "STARTING_ISSUE",
+"priority": "HIGH",
+"attachments": ["image1.png"],
+"serviceHistory": [
+{
+"serviceDate": "2024-01-15",
+"serviceType": "REPAIR",
+"description": "Replaced charging port"
+}
+]
+}
+
+IMPORTANT:
+Frontend will NOT send vehicleId/serviceHistory manually.
+
+Backend auto-builds payload.
+
+AI team can later change payload keys internally.
+
+==================================================
+AI RETRY FLOW
+=============
+
+Current retry logic already exists in BPMN.
+
+DO NOT CHANGE IT.
+
+Current behavior:
+
+* AI attempts up to 3 times
+* User may continue AI retry
+* If unresolved after retry limit:
+  → vendor assignment
+
+This flow must remain unchanged.
+
+==================================================
+CONVERSATIONAL AI CONTEXT
+=========================
+
+On AI retry:
+system should also send:
+
+* previous AI suggestion
+* previous user feedback
+* complaint context
+* vehicle context
+* service history
+* aiAttemptCount
+
+This creates enterprise conversational AI support behavior.
+
+==================================================
+NEW AI MODULE REQUIRED
+======================
+
+Create new package:
+
+complaintresolution/aiservices
+
+Inside it create:
+
+* dto
+* service
+* service/impl
+
+Expected components:
+
+* AIRequestDTO
+* AIResponseDTO
+* AIIntegrationService
+* AIIntegrationServiceImpl
+
+==================================================
+INTEGRATION REQUIREMENTS
+========================
+
+Use:
+
+* WebClient
+  NOT:
+* RestTemplate
+
+Use:
+ai.service.url
+
+from application.properties
+
+DO NOT hardcode URLs.
+
+==================================================
+DATABASE CONTEXT FROM AI TEAM
+=============================
+
+AI team may separately maintain:
+
+queries table
+responses table
+
+inside AI service.
+
+Our service does NOT manage those tables.
+
+We only send request payload and receive AI response.
+
+==================================================
+REPOSITORY CHANGE REQUIRED
+==========================
+
+VehicleRepository currently only supports:
+findById()
+
+Add:
+
+Optional<Vehicle> findByUserId(Long userId);
+
+ONLY this repository change is needed.
+
+==================================================
+IMPORTANT RESTRICTIONS
+======================
+
+DO NOT rewrite:
+
+* BPMN XML
+* workflow variables
+* retry logic
+* escalation logic
+* controllers
+* repositories unrelated to AI
+* DB schema
+* RBAC
+* vendor logic
+* manager logic
+* Camunda gateways
+
+==================================================
+FINAL EXPECTED RESULT
+=====================
+
+Driver submits complaint
+↓
+Complaint saved
+↓
+Workflow starts
+↓
+AIServiceImpl executes
+↓
+Fetch authenticated user
+↓
+Fetch vehicle
+↓
+Fetch service history
+↓
+Build AI payload
+↓
+Send request to FastAPI AI service
+↓
+Receive AI response
+↓
+Continue retry/escalation workflow unchanged
+
+==================================================
+WHAT IS EXPECTED FROM YOU
+=========================
+
+1. Analyze existing codebase
+2. Analyze complaint-workflow.bpmn
+3. Reuse existing modules properly
+4. Implement enterprise AI integration layer
+5. Preserve workflow behavior completely
+6. Ensure Maven compile succeeds
+7. Avoid bean conflicts/circular dependencies
+
+Report only:
+
+* files created
+* files modified
+* AI integration flow implemented
+* repository updates
+* remaining risks if any
