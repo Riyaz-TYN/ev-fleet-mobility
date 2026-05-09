@@ -2,7 +2,7 @@ package com.evfleetmobility.complaintresolution.complaint.service;
 
 import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.entity.Vendor;
+import com.evfleetmobility.complaintresolution.vendor.entity.Vendor;
 
 import java.util.List;
 

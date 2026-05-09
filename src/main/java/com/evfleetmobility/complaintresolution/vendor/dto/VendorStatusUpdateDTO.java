@@ -1,4 +1,4 @@
-package com.evfleetmobility.complaintresolution.complaintservices.vendor.dto;
+package com.evfleetmobility.complaintresolution.vendor.dto;
 
 public class VendorStatusUpdateDTO {
 

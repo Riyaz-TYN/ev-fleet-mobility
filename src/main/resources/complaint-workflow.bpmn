@@ -4,6 +4,8 @@
   xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
   targetNamespace="http://camunda.org/examples">
 
+  <bpmn:error id="Error_NoVendor" name="No Vendor Error" errorCode="NO_VENDOR"/>
+
   <bpmn:process id="complaintWorkflow"
                 name="Complaint Workflow"
                 isExecutable="true"
@@ -112,6 +114,14 @@
     <bpmn:serviceTask id="vendorAssign"
                       name="Assign Vendor"
                       camunda:delegateExpression="${vendorService}"/>
+
+    <bpmn:boundaryEvent id="vendorAssignError" attachedToRef="vendorAssign">
+      <bpmn:errorEventDefinition errorRef="Error_NoVendor" />
+    </bpmn:boundaryEvent>
+
+    <bpmn:sequenceFlow id="flow_vendor_error"
+                       sourceRef="vendorAssignError"
+                       targetRef="escalateTask"/>
 
     <!-- NOTIFY -->
     <bpmn:serviceTask id="notifyVendor"

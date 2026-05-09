@@ -10,10 +10,10 @@ import com.evfleetmobility.complaintresolution.complaint.dto.VehicleComplaintReq
 import com.evfleetmobility.complaintresolution.complaint.service.ComplaintService;
 import com.evfleetmobility.complaintresolution.manager.dto.ManagerApproveRequestDTO;
 import com.evfleetmobility.complaintresolution.manager.dto.ManagerDecisionRequestDTO;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorIdRequestDTO;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorNameRequestDTO;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorResolveRequestDTO;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorStatusUpdateDTO;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorIdRequestDTO;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorNameRequestDTO;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorResolveRequestDTO;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorStatusUpdateDTO;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -13,6 +13,8 @@ import com.evfleetmobility.useronboarding.profileservices.entity.IndividualDetai
 import com.evfleetmobility.useronboarding.profileservices.entity.OrganizationDetails;
 import com.evfleetmobility.useronboarding.profileservices.repository.IndividualRepository;
 import com.evfleetmobility.useronboarding.profileservices.repository.OrganizationRepository;
+import com.evfleetmobility.useronboarding.vehicleservices.repository.VehicleRepository;
+import com.evfleetmobility.useronboarding.vehicleservices.entity.Vehicle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final IndividualRepository individualRepo;
     private final OrganizationRepository organizationRepo;
+    private final VehicleRepository vehicleRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -163,6 +166,26 @@ public class AdminServiceImpl implements AdminService {
 
         ind.setCompanyApprovalStatus(status);
         individualRepo.save(ind);
+    }
+
+    @Override
+    @Transactional
+    public void assignDriverToVehicle(Long callerId, com.evfleetmobility.useronboarding.adminservices.dto.DriverAssignmentRequest request) {
+        User caller = userRepository.findById(callerId)
+                .orElseThrow(() -> new UserNotFoundException("Caller not found"));
+
+        if (!"SUPER_ADMIN".equalsIgnoreCase(caller.getRole()) && !"ADMIN".equalsIgnoreCase(caller.getRole()) && !"VENDOR_ADMIN".equalsIgnoreCase(caller.getRole())) {
+            throw new AccessDeniedException("You do not have permission to assign drivers to vehicles");
+        }
+
+        Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
+                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+
+        User driver = userRepository.findById(request.getDriverId())
+                .orElseThrow(() -> new UserNotFoundException("Driver not found"));
+
+        vehicle.setUser(driver);
+        vehicleRepository.save(vehicle);
     }
 
     private UserDetailsResponse mapToUserDetailsResponse(User user) {

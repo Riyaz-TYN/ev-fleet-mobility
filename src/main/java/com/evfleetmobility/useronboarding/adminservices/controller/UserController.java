@@ -49,6 +49,16 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse<>("Individuals fetched successfully",
                 adminService.getIndividualsByRoleAndStatus(callerId, status)));
     }
+
+    @PutMapping("/assign-vehicle")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'VENDOR_ADMIN')")
+    public ResponseEntity<ApiResponse<String>> assignDriverToVehicle(
+            Principal principal,
+            @RequestBody com.evfleetmobility.useronboarding.adminservices.dto.DriverAssignmentRequest request) {
+        Long callerId = Long.valueOf(principal.getName());
+        adminService.assignDriverToVehicle(callerId, request);
+        return ResponseEntity.ok(new ApiResponse<>("Driver assigned to vehicle successfully", null));
+    }
 }
 
 

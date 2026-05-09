@@ -6,12 +6,14 @@ import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintRequestDTO
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
 import com.evfleetmobility.complaintresolution.complaint.service.ComplaintService;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.entity.Vendor;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.repository.VendorRepository;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.service.VendorService;
+import com.evfleetmobility.complaintresolution.vendor.entity.Vendor;
+import com.evfleetmobility.complaintresolution.vendor.repository.VendorRepository;
+import com.evfleetmobility.complaintresolution.vendor.service.VendorService;
 import com.evfleetmobility.complaintresolution.manager.service.ManagerDashboardService;
 import com.evfleetmobility.complaintresolution.manager.service.ManagerService;
 import com.evfleetmobility.useronboarding.vehicleservices.repository.VehicleRepository;
+import com.evfleetmobility.useronboarding.authservices.repository.UserRepository;
+import com.evfleetmobility.useronboarding.authservices.entity.UserType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.camunda.bpm.engine.RuntimeService;
@@ -44,6 +46,7 @@ public class ComplaintServiceImpl implements ComplaintService {
 
     // Vehicle repository from useronboarding — used to validate vehicle existence on complaint creation
     private final VehicleRepository vehicleRepository;
+    private final UserRepository userRepository;
 
     @Autowired
     private RuntimeService runtimeService;
@@ -62,7 +65,8 @@ public class ComplaintServiceImpl implements ComplaintService {
             VendorRepository vendorRepository,
             ManagerService managerService,
             ManagerDashboardService managerDashboardService,
-            VehicleRepository vehicleRepository
+            VehicleRepository vehicleRepository,
+            UserRepository userRepository
     ) {
         this.complaintRepository = complaintRepository;
         this.objectMapper = objectMapper;
@@ -72,6 +76,7 @@ public class ComplaintServiceImpl implements ComplaintService {
         this.managerService = managerService;
         this.managerDashboardService = managerDashboardService;
         this.vehicleRepository = vehicleRepository;
+        this.userRepository = userRepository;
     }
 
     // =========================================================
@@ -124,6 +129,20 @@ public class ComplaintServiceImpl implements ComplaintService {
 
             Long userId = Long.parseLong(customerId);
 
+            if (request.getLatitude() != null && request.getLongitude() != null) {
+                userRepository.findById(userId).ifPresent(user -> {
+                    if (user.getUserType() == UserType.INDIVIDUAL && user.getIndividualDetails() != null) {
+                        user.getIndividualDetails().setLatitude(request.getLatitude());
+                        user.getIndividualDetails().setLongitude(request.getLongitude());
+                        userRepository.save(user);
+                    } else if (user.getUserType() == UserType.ORGANIZATION && user.getOrganizationDetails() != null) {
+                        user.getOrganizationDetails().setLatitude(request.getLatitude());
+                        user.getOrganizationDetails().setLongitude(request.getLongitude());
+                        userRepository.save(user);
+                    }
+                });
+            }
+
             var vehicle = vehicleRepository
                     .findByUserId(userId)
                     .orElseThrow(() ->
@@ -174,6 +193,13 @@ public class ComplaintServiceImpl implements ComplaintService {
             variables.put("managerDecision", "RETRY");
             variables.put("status", "IN_PROGRESS");
             variables.put("priority", "LOW");
+
+            if (request.getLatitude() != null) {
+                variables.put("complaintLatitude", request.getLatitude());
+            }
+            if (request.getLongitude() != null) {
+                variables.put("complaintLongitude", request.getLongitude());
+            }
 
             runtimeService.startProcessInstanceByKey("complaintWorkflow", variables);
 
