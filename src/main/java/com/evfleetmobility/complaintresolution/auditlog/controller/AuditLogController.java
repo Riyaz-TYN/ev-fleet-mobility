@@ -23,7 +23,6 @@ public class AuditLogController {
         this.auditLogService = auditLogService;
     }
 
-    // ✅ Fetch logs by complaintId (NEW)
     @PostMapping("/complaint")
     public List<AuditLog> getLogsByComplaintIdDTO(@RequestBody AuditLogRequestDTO request) {
         return auditLogService.getLogsByComplaintId(request.getComplaintId());
@@ -35,20 +34,17 @@ public class AuditLogController {
         return auditLogService.getLogsByComplaintId(complaintId);
     }
 
-    // ✅ Fetch logs by action (NEW)
     @PostMapping("/action")
     public List<AuditLog> getLogsByActionDTO(@RequestBody AuditLogActionRequestDTO request) {
         return auditLogService.getLogsByAction(request.getAction());
     }
 
-    // ✅ Fetch logs by action (OLD)
     @Deprecated
     @GetMapping("/action/{action}")
     public List<AuditLog> getLogsByAction(@PathVariable String action) {
         return auditLogService.getLogsByAction(action);
     }
 
-    // ✅ Fetch logs by vehicleId (NEW)
     @PostMapping("/vehicle")
     public List<AuditLog> getLogsByVehicleIdDTO(@RequestBody VehicleComplaintRequestDTO request) {
         return auditLogService.getLogsByVehicleId(request.getVehicleId());

@@ -52,15 +52,6 @@ public class IndividualDetails {
     @Column(nullable = true)
     private Double longitude;
 
-    @Column(name = "vendor_rating", nullable = false)
-    private Double vendorRating = 0.0;
-
-    @Column(name = "vendor_availability", nullable = false)
-    private Boolean vendorAvailability = false;
-
-    @Column(name = "expertise")
-    private String expertise;
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -106,20 +97,9 @@ public class IndividualDetails {
     public Double getLongitude() { return longitude; }
     public void setLongitude(Double longitude) { this.longitude = longitude; }
 
-    public Double getVendorRating() { return vendorRating; }
-    public void setVendorRating(Double vendorRating) { this.vendorRating = vendorRating; }
-
-    public Boolean getVendorAvailability() { return vendorAvailability; }
-    public void setVendorAvailability(Boolean vendorAvailability) { this.vendorAvailability = vendorAvailability; }
-
-    public String getExpertise() { return expertise; }
-    public void setExpertise(String expertise) { this.expertise = expertise; }
-
     public byte[] getPanCardContent() { return panCardContent; }
     public void setPanCardContent(byte[] panCardContent) { this.panCardContent = panCardContent; }
 
     public String getPanCardContentType() { return panCardContentType; }
     public void setPanCardContentType(String panCardContentType) { this.panCardContentType = panCardContentType; }
 }
-
-

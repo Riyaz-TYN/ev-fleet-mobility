@@ -57,7 +57,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
-                // We set the userId (as String) as the principal so controllers can use principal.getName() to get the ID.
+
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(String.valueOf(userId), null, List.of(authority));
                 SecurityContextHolder.getContext().setAuthentication(auth);

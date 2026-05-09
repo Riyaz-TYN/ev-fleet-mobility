@@ -45,5 +45,3 @@ public class VehicleController {
         return ResponseEntity.ok(new ApiResponse<>("Vehicles fetched successfully", vehicleService.getAllVehicles()));
     }
 }
-
-

@@ -1,7 +1,6 @@
 package com.evfleetmobility.complaintresolution.manager.service.impl;
 import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 
-
 import com.evfleetmobility.complaintresolution.manager.service.ManagerService;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
@@ -48,7 +47,6 @@ public class ManagerServiceImpl implements ManagerService {
             return "Manager task not found";
         }
 
-        // Complete workflow task
         taskService.complete(
                 task.getId(),
                 java.util.Map.of(
@@ -60,7 +58,6 @@ public class ManagerServiceImpl implements ManagerService {
         String previousStatus =
                 complaint.getStatus();
 
-        // Update complaint status
         if ("RESOLVE".equalsIgnoreCase(decision)) {
 
             complaint.setStatus("RESOLVED");
@@ -76,7 +73,6 @@ public class ManagerServiceImpl implements ManagerService {
 
         complaintRepository.save(complaint);
 
-        // Save audit log
         auditLogService.saveLog(
                 complaintId,
                 complaint.getVehicleId(),

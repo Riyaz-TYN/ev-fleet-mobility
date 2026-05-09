@@ -9,7 +9,6 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
     List<AuditLog> findByComplaintIdOrderByCreatedAtAsc(Long complaintId);
 
-    // ✅ Fetch logs by action
     List<AuditLog> findByActionOrderByCreatedAtDesc(String action);
 
     List<AuditLog> findByVehicleIdOrderByCreatedAtAsc(String vehicleId);

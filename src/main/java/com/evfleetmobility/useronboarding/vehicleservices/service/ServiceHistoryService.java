@@ -14,5 +14,3 @@ public interface ServiceHistoryService {
     BigDecimal getTotalMaintenanceCost(Long vehicleId);
     Long getLatestOdometer(Long vehicleId);
 }
-
-

@@ -19,18 +19,13 @@ public class ProfileRequest {
     private Double latitude;
     private Double longitude;
 
-    // Organization-specific
     private String companyName;
     private String companyEmail;
     private String gstin;
 
-    // Vendor-specific (admin-managed)
     private Boolean vendorAvailability;
     private String expertise;
 
-    // File uploads
     private MultipartFile panCardFile;
     private MultipartFile gstinDocumentFile;
 }
-
-

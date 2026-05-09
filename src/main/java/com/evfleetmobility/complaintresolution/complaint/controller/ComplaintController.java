@@ -19,9 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-// Note: @CrossOrigin removed — CORS is handled globally in SecurityConfig via CorsConfigurationSource
-// Roles in this system: DRIVER, VENDOR_ADMIN, MANAGER, ADMIN, SUPER_ADMIN
-
 @RestController
 @RequestMapping("/api/complaints")
 public class ComplaintController {
@@ -40,10 +37,6 @@ public class ComplaintController {
         this.auditLogService = auditLogService;
     }
 
-    // =========================================================
-    // CREATE COMPLAINT
-    // Role: DRIVER
-    // =========================================================
     @PostMapping
     @PreAuthorize("hasRole('DRIVER')")
     public ResponseEntity<?> saveComplaint(
@@ -60,24 +53,13 @@ public class ComplaintController {
                 )
         );
     }
-    // =========================================================
-    // GET COMPLAINTS (ROLE-BASED — single endpoint, smart filter)
-    //   DRIVER       -> their own complaints (by customerId)
-    //   VENDOR_ADMIN -> complaints assigned to their team
-    //   MANAGER      -> escalated complaints (ESCALATED_TO_MANAGER)
-    //   ADMIN        -> all complaints
-    //   SUPER_ADMIN  -> all complaints
-    // =========================================================
+
     @GetMapping
     @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getComplaints() {
         return ResponseEntity.ok(complaintService.getComplaints());
     }
 
-    // =========================================================
-    // GET COMPLAINT DETAILS
-    // Roles: all roles
-    // =========================================================
     @PostMapping("/details")
     @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getComplaintDetails(
@@ -88,10 +70,6 @@ public class ComplaintController {
         );
     }
 
-    // =========================================================
-    // FILTER BY STATUS
-    // Roles: MANAGER, ADMIN, SUPER_ADMIN
-    // =========================================================
     @PostMapping("/filter/status")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getComplaintsByStatus(
@@ -102,10 +80,6 @@ public class ComplaintController {
         );
     }
 
-    // =========================================================
-    // FILTER BY VEHICLE
-    // Roles: VENDOR_ADMIN, MANAGER, ADMIN, SUPER_ADMIN
-    // =========================================================
     @PostMapping("/filter/vehicle")
     @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getComplaintsByVehicle(
@@ -116,10 +90,6 @@ public class ComplaintController {
         );
     }
 
-    // =========================================================
-    // AUDIT LOGS
-    // Roles: ADMIN, SUPER_ADMIN
-    // =========================================================
     @PostMapping("/audit-logs")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getAuditLogs(
@@ -130,11 +100,6 @@ public class ComplaintController {
         );
     }
 
-    // =========================================================
-    // VENDOR_ADMIN: GET ASSIGNED COMPLAINTS BY TEAM NAME
-    // Replaces: POST /api/vendors/complaints
-    // Roles: VENDOR_ADMIN, MANAGER, ADMIN, SUPER_ADMIN
-    // =========================================================
     @PostMapping("/assigned")
     @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getAssignedComplaints(
@@ -145,11 +110,6 @@ public class ComplaintController {
         );
     }
 
-    // =========================================================
-    // VENDOR_ADMIN: UPDATE COMPLAINT STATUS
-    // Replaces: PUT /api/vendors/complaints/status
-    // Roles: VENDOR_ADMIN, MANAGER
-    // =========================================================
     @PutMapping("/status")
     @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER')")
     public ResponseEntity<String> updateComplaintStatus(
@@ -163,13 +123,6 @@ public class ComplaintController {
         );
     }
 
-    // =========================================================
-    // VENDOR_ADMIN: RESOLVE COMPLAINT
-    // Replaces: PUT /api/vendors/complaints/resolve
-    // resolved=true  -> RESOLVED
-    // resolved=false -> ESCALATED_TO_MANAGER
-    // Roles: VENDOR_ADMIN, MANAGER
-    // =========================================================
     @PutMapping("/resolve")
     @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER')")
     public ResponseEntity<String> resolveComplaint(
@@ -184,11 +137,6 @@ public class ComplaintController {
         );
     }
 
-    // =========================================================
-    // MANAGER: APPROVE AND ASSIGN COMPLAINT TO A TEAM
-    // Replaces: PUT /api/manager/complaints/approve
-    // Roles: MANAGER, ADMIN, SUPER_ADMIN
-    // =========================================================
     @PutMapping("/assign")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> approveAndAssign(
@@ -202,11 +150,6 @@ public class ComplaintController {
         );
     }
 
-    // =========================================================
-    // MANAGER: REJECT COMPLAINT
-    // Replaces: PUT /api/manager/complaints/reject
-    // Roles: MANAGER, ADMIN, SUPER_ADMIN
-    // =========================================================
     @PutMapping("/reject")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> rejectComplaint(
@@ -217,12 +160,6 @@ public class ComplaintController {
         );
     }
 
-    // =========================================================
-    // MANAGER: CAMUNDA WORKFLOW DECISION
-    // Replaces: PUT /api/manager/complaints/decision
-    // decision values: "RESOLVE" | "REJECT" | "RETRY"
-    // Roles: MANAGER, ADMIN, SUPER_ADMIN
-    // =========================================================
     @PutMapping("/decision")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<String> managerDecision(
@@ -236,11 +173,6 @@ public class ComplaintController {
         );
     }
 
-    // =========================================================
-    // MANAGER: VIEW AVAILABLE VENDORS (for assignment)
-    // Replaces: GET /api/vendors (manager view)
-    // Roles: MANAGER, ADMIN, SUPER_ADMIN
-    // =========================================================
     @GetMapping("/vendors")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getAvailableVendors() {
@@ -249,11 +181,6 @@ public class ComplaintController {
         );
     }
 
-    // =========================================================
-    // MANAGER: VIEW VENDOR DETAILS
-    // Replaces: POST /api/vendors/details (manager context)
-    // Roles: VENDOR_ADMIN, MANAGER, ADMIN, SUPER_ADMIN
-    // =========================================================
     @PostMapping("/vendors/details")
     @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getVendorDetails(

@@ -12,5 +12,3 @@ public interface VehicleService {
     VehicleResponse getVehicleById(Long vehicleId);
     List<VehicleResponse> getAllVehicles();
 }
-
-

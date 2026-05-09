@@ -1,9 +1,9 @@
 package com.evfleetmobility.complaintresolution.manager.service.impl;
 
-
 import com.evfleetmobility.complaintresolution.manager.service.ManagerDashboardService;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
+import com.evfleetmobility.useronboarding.profileservices.repository.OrganizationRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -15,19 +15,17 @@ import java.util.*;
 public class ManagerDashboardServiceImpl implements ManagerDashboardService {
 
     private final ComplaintRepository complaintRepository;
-
     private final ObjectMapper objectMapper;
+    private final OrganizationRepository organizationRepo;
 
     public ManagerDashboardServiceImpl(
             ComplaintRepository complaintRepository,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            OrganizationRepository organizationRepo
     ) {
-
-        this.complaintRepository =
-                complaintRepository;
-
-        this.objectMapper =
-                objectMapper;
+        this.complaintRepository = complaintRepository;
+        this.objectMapper = objectMapper;
+        this.organizationRepo = organizationRepo;
     }
 
     public List<Map<String, Object>>
@@ -104,7 +102,6 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
         return managerList;
     }
 
-    // ✅ GET ONLY ESCALATED COMPLAINTS
     public List<Map<String, Object>>
     getEscalatedComplaintsForManager() {
 
@@ -187,42 +184,24 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
             String teamName
     ) {
 
-        // Allowed resolution teams
-        List<String> validTeams =
-                Arrays.asList(
+        boolean isValidVendor = organizationRepo.findAll().stream()
+                .anyMatch(org -> org.getCompanyName() != null
+                        && org.getCompanyName().equalsIgnoreCase(teamName));
 
-                        "Battery & Charging",
-                        "Software & Tech",
-                        "Hardware & Mechanics",
-                        "Customer & Billing",
-                        "Service & Delivery"
-                );
-
-        // Validate team
-        if (!validTeams.contains(teamName)) {
-
+        if (!isValidVendor) {
             throw new RuntimeException(
-                    "Invalid resolution team selected"
+                "Invalid team name: '" + teamName + "'. " +
+                "Must match a registered vendor company name."
             );
         }
 
-        Complaint complaint =
-                complaintRepository.findById(
-                                complaintId
-                        )
-                        .orElseThrow(
-                                () -> new RuntimeException(
-                                        "Complaint not found"
-                                )
-                        );
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
         complaint.setStatus("APPROVED");
-
         complaint.setAssignedTeam(teamName);
 
-        return complaintRepository.save(
-                complaint
-        );
+        return complaintRepository.save(complaint);
     }
 
     public Complaint rejectComplaint(
@@ -247,7 +226,7 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
                 complaint
         );
     }
-    // ✅ MANAGER HISTORY
+
     public List<Map<String, Object>>
     getManagerHistory() {
 
@@ -259,7 +238,6 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
 
         for (Complaint complaint : complaints) {
 
-            // Only manager handled complaints
             if (
 
                     "RESOLVED".equals(

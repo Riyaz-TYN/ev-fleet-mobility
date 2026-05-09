@@ -6,11 +6,11 @@ import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintRequestDTO
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
 import com.evfleetmobility.complaintresolution.complaint.service.ComplaintService;
-import com.evfleetmobility.complaintresolution.vendor.entity.Vendor;
-import com.evfleetmobility.complaintresolution.vendor.repository.VendorRepository;
 import com.evfleetmobility.complaintresolution.vendor.service.VendorService;
 import com.evfleetmobility.complaintresolution.manager.service.ManagerDashboardService;
 import com.evfleetmobility.complaintresolution.manager.service.ManagerService;
+import com.evfleetmobility.useronboarding.profileservices.entity.OrganizationDetails;
+import com.evfleetmobility.useronboarding.profileservices.repository.OrganizationRepository;
 import com.evfleetmobility.useronboarding.vehicleservices.repository.VehicleRepository;
 import com.evfleetmobility.useronboarding.authservices.repository.UserRepository;
 import com.evfleetmobility.useronboarding.authservices.entity.UserType;
@@ -34,17 +34,13 @@ public class ComplaintServiceImpl implements ComplaintService {
     private final ObjectMapper objectMapper;
     private final AuditLogService auditLogService;
 
-    // Vendor service — handles vendor-related complaint operations
     private final VendorService vendorService;
 
-    // Vendor repository — used by manager to look up available vendors for assignment
-    private final VendorRepository vendorRepository;
+    private final OrganizationRepository organizationRepo;
 
-    // Manager services — decision-making and dashboard operations
     private final ManagerService managerService;
     private final ManagerDashboardService managerDashboardService;
 
-    // Vehicle repository from useronboarding — used to validate vehicle existence on complaint creation
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
 
@@ -62,7 +58,7 @@ public class ComplaintServiceImpl implements ComplaintService {
             ObjectMapper objectMapper,
             AuditLogService auditLogService,
             VendorService vendorService,
-            VendorRepository vendorRepository,
+            OrganizationRepository organizationRepo,
             ManagerService managerService,
             ManagerDashboardService managerDashboardService,
             VehicleRepository vehicleRepository,
@@ -72,19 +68,15 @@ public class ComplaintServiceImpl implements ComplaintService {
         this.objectMapper = objectMapper;
         this.auditLogService = auditLogService;
         this.vendorService = vendorService;
-        this.vendorRepository = vendorRepository;
+        this.organizationRepo = organizationRepo;
         this.managerService = managerService;
         this.managerDashboardService = managerDashboardService;
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
     }
 
-    // =========================================================
-    // SAVE COMPLAINT (USER/DRIVER)
-    // Validates vehicle exists via useronboarding VehicleRepository
-    // =========================================================
     @Override
-    public String saveComplaint(ComplaintRequestDTO request, String customerId) {
+    public String saveComplaint(ComplaintRequestDTO request, String callerUserIdStr) {
         try {
             if (request.getComplaintData() == null) {
                 return "Complaint data is missing";
@@ -104,30 +96,7 @@ public class ComplaintServiceImpl implements ComplaintService {
                     ? data.get("location").toString()
                     : "UNKNOWN";
 
-
-
-
-
-//            String vehicleId = data.get("vehicleId") != null
-//                    ? data.get("vehicleId").toString()
-//                    : "";
-
-
-//        Im as of now commenting this
-            // ---- Validate vehicle ownership via useronboarding VehicleRepository ----
-//            if (!vehicleId.isBlank()) {
-//                try {
-//                    Long vehicleIdLong = Long.parseLong(vehicleId);
-//                    boolean vehicleExists = vehicleRepository.existsById(vehicleIdLong);
-//                    if (!vehicleExists) {
-//                        return "Error: Vehicle with ID " + vehicleId + " does not exist in the system.";
-//                    }
-//                } catch (NumberFormatException e) {
-//                    return "Error: vehicleId must be a valid numeric ID.";
-//                }
-//            }
-
-            Long userId = Long.parseLong(customerId);
+            Long userId = Long.parseLong(callerUserIdStr);
 
             if (request.getLatitude() != null && request.getLongitude() != null) {
                 userRepository.findById(userId).ifPresent(user -> {
@@ -151,13 +120,12 @@ public class ComplaintServiceImpl implements ComplaintService {
 
             String vehicleId = vehicle.getId().toString();
 
-
             String jsonData = objectMapper.writeValueAsString(data);
 
             Complaint complaint = new Complaint();
             complaint.setIssueCategory(issueCategory);
             complaint.setData(jsonData);
-            complaint.setCustomerId(customerId);
+            complaint.setCustomerId(callerUserIdStr);  
             complaint.setVehicleId(vehicleId);
 
             Complaint savedComplaint = complaintRepository.save(complaint);
@@ -171,7 +139,7 @@ public class ComplaintServiceImpl implements ComplaintService {
                     "OPEN",
                     "Complaint created by user",
                     Map.of(
-                            "customerId", customerId,
+                            "userId", callerUserIdStr,
                             "issueCategory", issueCategory,
                             "issueDescription", issueDescription,
                             "location", location,
@@ -181,7 +149,7 @@ public class ComplaintServiceImpl implements ComplaintService {
 
             Map<String, Object> variables = new HashMap<>();
             variables.put("complaintId", savedComplaint.getId());
-            variables.put("customerId", customerId);
+            variables.put("customerId", callerUserIdStr);
             variables.put("issueDescription", issueDescription);
             variables.put("issueCategory", issueCategory);
             variables.put("location", location);
@@ -226,130 +194,90 @@ public class ComplaintServiceImpl implements ComplaintService {
         }
     }
 
-    // =========================================================
-    // GET COMPLAINTS — RBAC driven
-    // Roles in system: DRIVER, VENDOR_ADMIN, MANAGER, ADMIN, SUPER_ADMIN
-    //   DRIVER       -> own complaints (by customerId = JWT subject)
-    //   VENDOR_ADMIN -> complaints assigned to their team (subject = vendor team name)
-    //   MANAGER      -> escalated complaints only (status = ESCALATED_TO_MANAGER)
-    //   ADMIN / SUPER_ADMIN -> all complaints
-    // =========================================================
     @Override
     public List<Complaint> getComplaints() {
         String role = authContextService.getCurrentRole();
-        String subject = authContextService.getCurrentSubject();
+
+        Long currentUserId = authContextService.getCurrentUserId();
 
         if ("DRIVER".equalsIgnoreCase(role)) {
-            return complaintRepository.findByCustomerIdOrderByCreatedAtDesc(subject);
+
+            return complaintRepository.findByCustomerIdOrderByCreatedAtDesc(String.valueOf(currentUserId));
         }
 
         if ("VENDOR_ADMIN".equalsIgnoreCase(role)) {
-            return complaintRepository.findByAssignedTeamOrderByCreatedAtDesc(subject);
+
+            return userRepository.findById(currentUserId)
+                    .filter(u -> u.getOrganizationDetails() != null
+                            && u.getOrganizationDetails().getCompanyName() != null)
+                    .map(u -> complaintRepository.findByAssignedTeamOrderByCreatedAtDesc(
+                            u.getOrganizationDetails().getCompanyName()))
+                    .orElse(java.util.List.of());
         }
 
         if ("MANAGER".equalsIgnoreCase(role)) {
             return complaintRepository.findByStatusOrderByCreatedAtDesc("ESCALATED_TO_MANAGER");
         }
 
-        // ADMIN, SUPER_ADMIN — return all
         return complaintRepository.findAll();
     }
 
-    // =========================================================
-    // COMPLAINT DETAILS
-    // =========================================================
     @Override
     public Complaint getComplaintDetails(Long complaintId) {
         return complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new RuntimeException("Complaint not found with ID: " + complaintId));
     }
 
-    // =========================================================
-    // FILTER: VEHICLE
-    // =========================================================
     @Override
     public List<Complaint> getComplaintsByVehicle(String vehicleId) {
         return complaintRepository.findByVehicleIdOrderByCreatedAtDesc(vehicleId);
     }
 
-    // =========================================================
-    // FILTER: STATUS
-    // =========================================================
     @Override
     public List<Complaint> getComplaintStatus(String status) {
         return complaintRepository.findByStatusOrderByCreatedAtDesc(status);
     }
 
-    // =========================================================
-    // VENDOR: GET ASSIGNED COMPLAINTS BY VENDOR NAME
-    // =========================================================
     @Override
     public List<Complaint> getAssignedComplaintsByVendorName(String vendorName) {
         return vendorService.getAssignedComplaints(vendorName);
     }
 
-    // =========================================================
-    // VENDOR: UPDATE COMPLAINT STATUS
-    // =========================================================
     @Override
     public String updateComplaintStatus(Long complaintId, String status) {
         return vendorService.updateComplaintStatus(complaintId, status);
     }
 
-    // =========================================================
-    // VENDOR: RESOLVE COMPLAINT
-    // resolved=true  -> sets RESOLVED
-    // resolved=false -> sets ESCALATED_TO_MANAGER
-    // =========================================================
     @Override
     public String resolveComplaint(Long complaintId, Boolean resolved, String remarks) {
         return vendorService.resolveComplaint(complaintId, resolved, remarks);
     }
 
-    // =========================================================
-    // MANAGER: APPROVE AND ASSIGN COMPLAINT TO A TEAM
-    // Uses ManagerDashboardService for team validation + Camunda
-    // =========================================================
     @Override
     public Complaint approveAndAssignComplaint(Long complaintId, String teamName) {
         return managerDashboardService.approveAndAssignComplaint(complaintId, teamName);
     }
 
-    // =========================================================
-    // MANAGER: REJECT COMPLAINT
-    // =========================================================
     @Override
     public Complaint rejectComplaint(Long complaintId) {
         return managerDashboardService.rejectComplaint(complaintId);
     }
 
-    // =========================================================
-    // MANAGER: CAMUNDA WORKFLOW DECISION
-    // decision: "RESOLVE" | "REJECT" | "RETRY"
-    // =========================================================
     @Override
     public String managerDecision(Long complaintId, String decision) {
         return managerService.managerDecision(complaintId, decision);
     }
 
-    // =========================================================
-    // MANAGER: VENDOR LISTING (for assignment/review UI)
-    // Returns all available vendors via VendorRepository
-    // =========================================================
     @Override
-    public List<Vendor> getAvailableVendors() {
-        return vendorRepository.findByAvailabilityTrue();
+    public List<OrganizationDetails> getAvailableVendors() {
+        return organizationRepo.findByVendorAvailabilityTrue();
     }
 
     @Override
-    public Vendor getVendorById(Long vendorId) {
-        return vendorRepository.findById(vendorId)
+    public OrganizationDetails getVendorById(Long vendorId) {
+        return organizationRepo.findById(vendorId)
                 .orElseThrow(() -> new RuntimeException("Vendor not found with ID: " + vendorId));
     }
-
-    // =========================================================
-    // DEPRECATED METHODS (backward compat only)
-    // =========================================================
 
     @Override
     public List<Complaint> getMyComplaints(String customerId) {

@@ -12,5 +12,3 @@ public class DocumentDownloadResponse {
     public byte[] getContent() { return content; }
     public String getContentType() { return contentType; }
 }
-
-

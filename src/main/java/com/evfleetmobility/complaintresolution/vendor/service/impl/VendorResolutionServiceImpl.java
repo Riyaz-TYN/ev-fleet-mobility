@@ -1,6 +1,5 @@
 package com.evfleetmobility.complaintresolution.vendor.service.impl;
 
-
 import com.evfleetmobility.complaintresolution.vendor.service.VendorResolutionService;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
@@ -31,14 +30,11 @@ public class VendorResolutionServiceImpl implements VendorResolutionService, Jav
 
         if (complaint != null) {
 
-            // Preserve existing vendor
             String assignedVendor =
                     complaint.getAssignedTeam();
 
-            // Update only status
             complaint.setStatus("RESOLVED");
 
-            // Keep original vendor name
             complaint.setAssignedTeam(
                     assignedVendor
             );
@@ -46,7 +42,7 @@ public class VendorResolutionServiceImpl implements VendorResolutionService, Jav
             complaintRepository.save(complaint);
 
             System.out.println(
-                    "✅ Vendor resolved → DB updated"
+                    "âœ… Vendor resolved â†’ DB updated"
             );
         }
     }

@@ -28,5 +28,3 @@ public class ServiceHistoryRequest {
     public String getProviderName() { return providerName; }
     public void setProviderName(String providerName) { this.providerName = providerName; }
 }
-
-

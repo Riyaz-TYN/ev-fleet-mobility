@@ -11,5 +11,3 @@ public interface AuthService {
     AuthResponse login(LoginRequest request);
     AuthResponse refresh(RefreshRequest request);
 }
-
-

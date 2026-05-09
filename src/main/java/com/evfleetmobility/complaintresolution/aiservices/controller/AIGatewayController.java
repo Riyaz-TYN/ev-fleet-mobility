@@ -27,9 +27,6 @@ public class AIGatewayController {
         this.aiResponseRepository = aiResponseRepository;
     }
 
-    // =========================================================
-    // SAVE QUERY — called by FastAPI AI service
-    // =========================================================
     @PostMapping("/queries")
     public ResponseEntity<AIQuery> saveQuery(@RequestBody AIQuerySaveRequestDTO request) {
         AIQuery query = new AIQuery();
@@ -42,9 +39,6 @@ public class AIGatewayController {
         return ResponseEntity.ok(saved);
     }
 
-    // =========================================================
-    // SAVE RESPONSE — called by FastAPI AI service
-    // =========================================================
     @PostMapping("/responses")
     public ResponseEntity<AIResponse> saveResponse(@RequestBody AIResponseSaveRequestDTO request) {
         AIResponse response = new AIResponse();
@@ -62,17 +56,11 @@ public class AIGatewayController {
         return ResponseEntity.ok(saved);
     }
 
-    // =========================================================
-    // GET QUERIES BY USER — for dashboard/reporting
-    // =========================================================
     @GetMapping("/queries/user/{userId}")
     public ResponseEntity<List<AIQuery>> getQueriesByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(aiQueryRepository.findByUserIdOrderByCreatedAtDesc(userId));
     }
 
-    // =========================================================
-    // GET RESPONSES BY QUERY — for tracking AI conversation
-    // =========================================================
     @GetMapping("/responses/query/{queryId}")
     public ResponseEntity<List<AIResponse>> getResponsesByQuery(@PathVariable Long queryId) {
         return ResponseEntity.ok(aiResponseRepository.findByQueryIdOrderByCreatedAtDesc(queryId));

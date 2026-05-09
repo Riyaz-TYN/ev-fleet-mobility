@@ -27,5 +27,3 @@ public class StatusController {
         return ResponseEntity.ok(new ApiResponse<>("Status updated successfully", "Success"));
     }
 }
-
-

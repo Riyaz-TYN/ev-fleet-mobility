@@ -4,28 +4,23 @@ import java.util.List;
 
 public class AIRequestDTO {
 
-    // Complaint context
     private Long complaintId;
     private String title;
     private String description;
     private String issueType;
     private String priority;
 
-    // Vehicle context
     private String vehicleId;
     private String vehicleModel;
     private String vehicleMake;
     private Integer yearOfManufacture;
     private Double batteryCapacityKwh;
 
-    // Service history
     private List<ServiceHistoryDTO> serviceHistory;
 
-    // AI retry context (conversational)
     private Integer aiAttemptCount;
     private String previousSuggestion;
 
-    // User context
     private Long userId;
 
     public AIRequestDTO() {}

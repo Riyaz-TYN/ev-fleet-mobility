@@ -77,7 +77,6 @@ public class AuthServiceImpl implements AuthService {
             user.setOrganizationDetails(org);
         }
 
-        // Auto-approve SUPER_ADMIN (TYN)
         if ("SUPER_ADMIN".equalsIgnoreCase(user.getRole())) {
             user.setApprovalStatus(ApprovalStatus.APPROVED);
             if (user.getOrganizationDetails() != null) {
@@ -123,5 +122,3 @@ public class AuthServiceImpl implements AuthService {
         return new AuthResponse(newAccessToken, token);
     }
 }
-
-

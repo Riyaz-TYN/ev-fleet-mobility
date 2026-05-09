@@ -70,5 +70,3 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse<>("Vendor rating updated successfully", null));
     }
 }
-
-

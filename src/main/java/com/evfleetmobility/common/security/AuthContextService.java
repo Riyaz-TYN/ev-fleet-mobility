@@ -30,7 +30,7 @@ public class AuthContextService {
         }
         return null;
     }
-    
+
     public String getCurrentSubject() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null ? auth.getName() : null;

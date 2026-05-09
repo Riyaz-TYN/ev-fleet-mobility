@@ -65,5 +65,3 @@ public class DocumentController {
                 .body(response.getContent());
     }
 }
-
-

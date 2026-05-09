@@ -51,5 +51,3 @@ public class ServiceHistoryController {
         return ResponseEntity.ok(new ApiResponse<>("Latest odometer fetched successfully", serviceHistoryService.getLatestOdometer(vehicleId)));
     }
 }
-
-

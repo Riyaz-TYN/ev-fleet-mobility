@@ -113,7 +113,6 @@ public class AdminServiceImpl implements AdminService {
         throw new AccessDeniedException("You do not have permission to list organizations");
     }
 
-
     @Override
     @Transactional
     public void handleUnifiedApproval(Long callerId, StatusRequest request) {
@@ -203,13 +202,13 @@ public class AdminServiceImpl implements AdminService {
 
         if (targetUser.getUserType() == UserType.ORGANIZATION && targetUser.getOrganizationDetails() != null) {
             targetUser.getOrganizationDetails().setVendorRating(rating);
-        } else if (targetUser.getUserType() == UserType.INDIVIDUAL && targetUser.getIndividualDetails() != null) {
-            targetUser.getIndividualDetails().setVendorRating(rating);
+            userRepository.save(targetUser);
         } else {
-            throw new RuntimeException("Target user does not have a profile capable of receiving a vendor rating");
+            throw new RuntimeException(
+                "Cannot set vendor rating on a non-organization user. " +
+                "Only VENDOR_ADMIN company accounts (OrganizationDetails) can receive ratings."
+            );
         }
-        
-        userRepository.save(targetUser);
     }
 
     private UserDetailsResponse mapToUserDetailsResponse(User user) {
@@ -222,12 +221,10 @@ public class AdminServiceImpl implements AdminService {
 
         if (user.getUserType() == UserType.INDIVIDUAL && user.getIndividualDetails() != null) {
             IndividualDetails ind = user.getIndividualDetails();
+
             builder.phoneNumber(ind.getPhoneNumber())
                    .fullName(ind.getFullName())
-                   .panNumber(ind.getPanNumber())
-                   .vendorRating(ind.getVendorRating())
-                   .vendorAvailability(ind.getVendorAvailability())
-                   .expertise(ind.getExpertise());
+                   .panNumber(ind.getPanNumber());
 
             if (ind.getOrganizationDetails() != null) {
                 builder.companyName(ind.getOrganizationDetails().getCompanyName())
@@ -270,5 +267,3 @@ public class AdminServiceImpl implements AdminService {
                 .build();
     }
 }
-
-

@@ -12,5 +12,3 @@ public class AuthResponse {
     public String getAccessToken() { return accessToken; }
     public String getRefreshToken() { return refreshToken; }
 }
-
-

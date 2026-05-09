@@ -42,5 +42,3 @@ public class AuthController {
         return ResponseEntity.ok(new ApiResponse<>("Logged out successfully", "Clear tokens from client"));
     }
 }
-
-

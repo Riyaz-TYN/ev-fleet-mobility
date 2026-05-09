@@ -15,5 +15,3 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByUserType(UserType userType);
     List<User> findByUserTypeAndApprovalStatus(UserType userType, ApprovalStatus status);
 }
-
-

@@ -7,5 +7,3 @@ public interface ProfileService {
     ProfileResponse getMyProfile(Long userId);
     String completeProfile(Long userId, ProfileRequest request);
 }
-
-

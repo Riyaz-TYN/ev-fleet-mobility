@@ -9,9 +9,6 @@ import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 
-/**
- * Controller to expose API for frontend
- */
 @RestController
 @RequestMapping("/api/config")
 @PreAuthorize("hasAnyRole('USER','DRIVER','VENDOR','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
@@ -20,10 +17,6 @@ public class ConfigController {
     @Autowired
     private ConfigService configService;
 
-    /**
-     * GET API to fetch form fields
-     * URL: http://localhost:8080/api/config
-     */
     @GetMapping
     public List<FieldConfigDTO> getConfig() {
         return configService.getFields();

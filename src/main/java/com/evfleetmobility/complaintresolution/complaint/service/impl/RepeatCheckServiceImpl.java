@@ -1,7 +1,6 @@
 package com.evfleetmobility.complaintresolution.complaint.service.impl;
 import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 
-
 import com.evfleetmobility.complaintresolution.complaint.service.RepeatCheckService;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -28,7 +27,7 @@ public class RepeatCheckServiceImpl implements RepeatCheckService, JavaDelegate 
         String customerId = (String) execution.getVariable("customerId");
         String issueCategory = (String) execution.getVariable("issueCategory");
         Long complaintId = (Long) execution.getVariable("complaintId");
-        String vehicleId = (String) execution.getVariable("vehicleId"); // ✅ added
+        String vehicleId = (String) execution.getVariable("vehicleId"); 
 
         int count = repository
                 .findByCustomerIdAndIssueCategory(customerId, issueCategory)
@@ -51,7 +50,7 @@ public class RepeatCheckServiceImpl implements RepeatCheckService, JavaDelegate 
 
         auditLogService.saveLog(
                 complaintId,
-                vehicleId, // ✅ added
+                vehicleId, 
                 "REPEAT_CHECKED",
                 "SYSTEM",
                 null,
@@ -70,7 +69,7 @@ public class RepeatCheckServiceImpl implements RepeatCheckService, JavaDelegate 
         if (isRepeated) {
             auditLogService.saveLog(
                     complaintId,
-                    vehicleId, // ✅ added
+                    vehicleId, 
                     "REPEAT_DETECTED",
                     "SYSTEM",
                     null,
@@ -87,7 +86,7 @@ public class RepeatCheckServiceImpl implements RepeatCheckService, JavaDelegate 
         if (!"LOW".equals(priority)) {
             auditLogService.saveLog(
                     complaintId,
-                    vehicleId, // ✅ added
+                    vehicleId, 
                     "PRIORITY_UPDATED",
                     "SYSTEM",
                     "LOW",

@@ -10,5 +10,3 @@ public enum ServiceType {
     REPAIR,
     OTHER
 }
-
-

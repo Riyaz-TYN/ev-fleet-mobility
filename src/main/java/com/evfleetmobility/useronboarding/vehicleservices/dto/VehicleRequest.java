@@ -31,5 +31,3 @@ public class VehicleRequest {
     public void setChassisNo(String chassisNo) {this.chassisNo = chassisNo; }
 
 }
-
-

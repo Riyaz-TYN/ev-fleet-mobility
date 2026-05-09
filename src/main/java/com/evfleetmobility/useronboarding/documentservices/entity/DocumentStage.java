@@ -6,5 +6,3 @@ public enum DocumentStage {
     VERIFIED,
     REJECTED
 }
-
-

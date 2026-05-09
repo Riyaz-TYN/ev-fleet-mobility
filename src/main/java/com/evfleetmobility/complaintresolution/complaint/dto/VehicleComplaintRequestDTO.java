@@ -1,6 +1,5 @@
 package com.evfleetmobility.complaintresolution.complaint.dto;
 
-
 import lombok.Data;
 
 @Data

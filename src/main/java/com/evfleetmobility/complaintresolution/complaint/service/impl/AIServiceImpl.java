@@ -51,12 +51,10 @@ public class AIServiceImpl implements AIService, JavaDelegate {
 
         aiAttemptCount = aiAttemptCount + 1;
 
-        // ---- Build AI request with full context ----
         AIRequestDTO aiRequest = buildAIRequest(
                 execution, complaintId, vehicleId, issueCategory, issueDescription, aiAttemptCount
         );
 
-        // ---- Call external FastAPI AI service ----
         AIResponseDTO aiResponse = aiIntegrationService.callAI(aiRequest);
 
         String suggestion = aiResponse.getSuggestion();
@@ -65,7 +63,6 @@ public class AIServiceImpl implements AIService, JavaDelegate {
                 ? aiResponse.getPredictedCategory()
                 : issueCategory;
 
-        // ---- Set workflow variables (UNCHANGED from original) ----
         execution.setVariable("aiAttemptCount", aiAttemptCount);
         execution.setVariable("aiSuggestion", suggestion);
         execution.setVariable("aiConfidence", confidence);
@@ -127,16 +124,6 @@ public class AIServiceImpl implements AIService, JavaDelegate {
         }
     }
 
-    /**
-     * Builds the AI request payload with full context:
-     * - Complaint details from workflow variables
-     * - Vehicle details from VehicleRepository
-     * - Service history from ServiceHistoryRepository
-     * - Previous AI suggestion for conversational retry context
-     *
-     * NOTE: SecurityContext is NOT available in Camunda delegates.
-     *       All data comes from workflow execution variables.
-     */
     private AIRequestDTO buildAIRequest(
             DelegateExecution execution,
             Long complaintId,
@@ -153,11 +140,9 @@ public class AIServiceImpl implements AIService, JavaDelegate {
         request.setVehicleId(vehicleId);
         request.setAiAttemptCount(aiAttemptCount);
 
-        // Priority from workflow
         String priority = (String) execution.getVariable("priority");
         request.setPriority(priority != null ? priority : "LOW");
 
-        // User ID from workflow
         String customerId = (String) execution.getVariable("customerId");
         if (customerId != null) {
             try {
@@ -167,22 +152,16 @@ public class AIServiceImpl implements AIService, JavaDelegate {
             }
         }
 
-        // Previous suggestion for conversational retry
         if (aiAttemptCount > 1) {
             String previousSuggestion = (String) execution.getVariable("aiSuggestion");
             request.setPreviousSuggestion(previousSuggestion);
         }
 
-        // ---- Auto-fetch vehicle context ----
         enrichWithVehicleContext(request, vehicleId);
 
         return request;
     }
 
-    /**
-     * Fetches vehicle details and service history from the database.
-     * Gracefully handles missing/invalid vehicle IDs.
-     */
     private void enrichWithVehicleContext(AIRequestDTO request, String vehicleId) {
         if (vehicleId == null || vehicleId.isBlank()) {
             request.setServiceHistory(new ArrayList<>());
@@ -192,7 +171,6 @@ public class AIServiceImpl implements AIService, JavaDelegate {
         try {
             Long vehicleIdLong = Long.parseLong(vehicleId);
 
-            // Fetch vehicle
             vehicleRepository.findById(vehicleIdLong).ifPresent(vehicle -> {
                 request.setVehicleModel(vehicle.getModel());
                 request.setVehicleMake(vehicle.getMake());
@@ -200,7 +178,6 @@ public class AIServiceImpl implements AIService, JavaDelegate {
                 request.setBatteryCapacityKwh(vehicle.getBatteryCapacityKwh());
             });
 
-            // Fetch service history
             List<ServiceHistory> histories = serviceHistoryRepository.findByVehicleId(vehicleIdLong);
             List<ServiceHistoryDTO> historyDTOs = new ArrayList<>();
             for (ServiceHistory sh : histories) {

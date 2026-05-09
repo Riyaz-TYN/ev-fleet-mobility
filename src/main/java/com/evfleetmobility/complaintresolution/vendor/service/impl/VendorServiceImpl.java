@@ -1,12 +1,11 @@
 package com.evfleetmobility.complaintresolution.vendor.service.impl;
 import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 
-
 import com.evfleetmobility.complaintresolution.vendor.service.VendorService;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
-import com.evfleetmobility.complaintresolution.vendor.entity.Vendor;
+import com.evfleetmobility.useronboarding.profileservices.entity.OrganizationDetails;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
-import com.evfleetmobility.complaintresolution.vendor.repository.VendorRepository;
+import com.evfleetmobility.useronboarding.profileservices.repository.OrganizationRepository;
 
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
@@ -25,7 +24,7 @@ import java.util.Map;
 public class VendorServiceImpl implements VendorService, JavaDelegate {
 
     @Autowired
-    private VendorRepository vendorRepository;
+    private OrganizationRepository organizationRepo;
 
     @Autowired
     private ComplaintRepository complaintRepository;
@@ -59,12 +58,11 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         Double complaintLongitude =
                 getDoubleVariable(execution, "complaintLongitude");
 
-        // Mock location if missing
         if (complaintLatitude == null
                 || complaintLongitude == null) {
 
             System.out.println(
-                    "⚠️ Location missing. Using mock coordinates."
+                    "âš ï¸ Location missing. Using mock coordinates."
             );
 
             complaintLatitude = 11.0168;
@@ -77,25 +75,23 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         final double finalComplaintLongitude =
                 complaintLongitude;
 
-        // Fetch available vendors
-        List<Vendor> availableVendors =
-                vendorRepository.findByAvailabilityTrue();
+        List<OrganizationDetails> availableVendors =
+                organizationRepo.findByVendorAvailabilityTrue();
 
-        List<Vendor> validVendors = availableVendors.stream()
+        List<OrganizationDetails> validVendors = availableVendors.stream()
                 .filter(v -> v.getLatitude() != null && v.getLongitude() != null)
                 .toList();
 
         if (validVendors.isEmpty()) {
 
-            System.out.println("⚠️ No available vendors found. Escalating to Manager.");
-            
-            // Save vendor into complaint table as escalated
+            System.out.println("âš ï¸ No available vendors found. Escalating to Manager.");
+
             Complaint complaint = complaintRepository.findById(complaintId)
                     .orElseThrow(() -> new RuntimeException("Complaint not found"));
-            
+
             complaint.setStatus("ESCALATED_TO_MANAGER");
             complaintRepository.save(complaint);
-            
+
             auditLogService.saveLog(
                     complaintId, vehicleId, "VENDOR_ESCALATED", "SYSTEM", "AI_PROCESSED", "ESCALATED_TO_MANAGER", 
                     "No valid vendors available for assignment", new HashMap<>()
@@ -104,11 +100,10 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
             throw new org.camunda.bpm.engine.delegate.BpmnError("NO_VENDOR", "No valid vendors found");
         }
 
-        // Find nearest vendor
-        Vendor selectedVendor = validVendors.stream()
+        OrganizationDetails selectedVendor = validVendors.stream()
 
                 .min(
-                        Comparator.comparingDouble((Vendor v) ->
+                        Comparator.comparingDouble((OrganizationDetails v) ->
                                 calculateDistance(
                                         finalComplaintLatitude,
                                         finalComplaintLongitude,
@@ -117,7 +112,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                                 )
                         ).thenComparing(
                                 Comparator.comparingDouble(
-                                        Vendor::getRating
+                                        OrganizationDetails::getVendorRating
                                 ).reversed()
                         )
                 )
@@ -136,7 +131,6 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                         selectedVendor.getLongitude()
                 );
 
-        // Workflow variables
         execution.setVariable(
                 "vendorId",
                 selectedVendor.getId()
@@ -144,17 +138,17 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
 
         execution.setVariable(
                 "vendorName",
-                selectedVendor.getName()
+                selectedVendor.getCompanyName()
         );
 
         execution.setVariable(
                 "vendorLocation",
-                selectedVendor.getLocation()
+                selectedVendor.getAddressLine1()
         );
 
         execution.setVariable(
                 "vendorRating",
-                selectedVendor.getRating()
+                selectedVendor.getVendorRating()
         );
 
         execution.setVariable(
@@ -168,11 +162,10 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         );
 
         System.out.println(
-                "✅ Assigned Vendor: "
-                        + selectedVendor.getName()
+                "âœ… Assigned Vendor: "
+                        + selectedVendor.getCompanyName()
         );
 
-        // Save vendor into complaint table
         Complaint complaint =
                 complaintRepository.findById(complaintId)
                         .orElseThrow(() ->
@@ -182,14 +175,13 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                         );
 
         complaint.setAssignedTeam(
-                selectedVendor.getName()
+                selectedVendor.getCompanyName()
         );
 
         complaint.setStatus("ASSIGNED_TO_VENDOR");
 
         complaintRepository.save(complaint);
 
-        // Metadata
         Map<String, Object> metadata =
                 new HashMap<>();
 
@@ -205,17 +197,17 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
 
         metadata.put(
                 "vendorName",
-                selectedVendor.getName()
+                selectedVendor.getCompanyName()
         );
 
         metadata.put(
                 "vendorLocation",
-                selectedVendor.getLocation()
+                selectedVendor.getAddressLine1()
         );
 
         metadata.put(
                 "vendorRating",
-                selectedVendor.getRating()
+                selectedVendor.getVendorRating()
         );
 
         metadata.put(
@@ -238,7 +230,6 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 location
         );
 
-        // Save audit log
         auditLogService.saveLog(
                 complaintId,
                 vehicleId,
@@ -251,38 +242,33 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         );
     }
 
-    // Vendor Dashboard Methods
-
-    public List<Vendor> getAllVendors() {
-        return vendorRepository.findAll();
+    public List<OrganizationDetails> getAllVendors() {
+        return organizationRepo.findAll();
     }
 
-    // ✅ Get vendor by ID
-    public Vendor getVendorById(Long id) {
-        return vendorRepository.findById(id)
+    public OrganizationDetails getVendorById(Long id) {
+        return organizationRepo.findById(id)
                 .orElse(null);
     }
 
-    public List<Vendor> getAvailableVendors() {
-        return vendorRepository.findByAvailabilityTrue();
+    public List<OrganizationDetails> getAvailableVendors() {
+        return organizationRepo.findByVendorAvailabilityTrue();
     }
 
-    // ✅ Get vendors by expertise
-    public List<Vendor> getVendorsByExpertise(
+    public List<OrganizationDetails> getVendorsByExpertise(
             String expertise) {
 
-        return vendorRepository
+        return organizationRepo
                 .findByExpertiseIgnoreCase(expertise);
     }
 
-    public List<Vendor> getVendorsByAvailability(
+    public List<OrganizationDetails> getVendorsByAvailability(
             Boolean availability) {
 
-        return vendorRepository
-                .findByAvailability(availability);
+        return organizationRepo
+                .findByVendorAvailability(availability);
     }
 
-    // ✅ Vendor dashboard assigned complaints
     public List<Complaint> getAssignedComplaints(
             String vendorName) {
 
@@ -307,7 +293,6 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         String previousStatus =
                 complaint.getStatus();
 
-        // Preserve assigned vendor
         String assignedVendor =
                 complaint.getAssignedTeam();
 
@@ -348,7 +333,6 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                                 )
                         );
 
-        // Find Camunda vendor task
         Task task = taskService.createTaskQuery()
                 .processVariableValueEquals(
                         "complaintId",
@@ -364,7 +348,6 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         String previousStatus =
                 complaint.getStatus();
 
-        // Complete workflow task
         taskService.complete(
                 task.getId(),
                 java.util.Map.of(
@@ -373,7 +356,6 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 )
         );
 
-        // Preserve assigned vendor
         String assignedVendor =
                 complaint.getAssignedTeam();
 
@@ -394,7 +376,6 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
 
         complaintRepository.save(complaint);
 
-        // Save audit log
         auditLogService.saveLog(
                 complaintId,
                 complaint.getVehicleId(),
@@ -415,8 +396,6 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 ? "Complaint resolved successfully"
                 : "Complaint escalated to manager";
     }
-
-    // Helper Methods
 
     private Double getDoubleVariable(
             DelegateExecution execution,

@@ -24,5 +24,3 @@ public class DocumentResponse {
     public String getStage() { return stage; }
     public String getRemarks() { return remarks; }
 }
-
-

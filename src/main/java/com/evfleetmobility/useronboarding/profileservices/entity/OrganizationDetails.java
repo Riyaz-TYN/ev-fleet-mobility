@@ -110,5 +110,3 @@ public class OrganizationDetails {
     public String getPanCardContentType() { return panCardContentType; }
     public void setPanCardContentType(String panCardContentType) { this.panCardContentType = panCardContentType; }
 }
-
-

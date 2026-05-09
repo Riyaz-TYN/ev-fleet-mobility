@@ -4,5 +4,3 @@ public enum UserType {
     INDIVIDUAL,
     ORGANIZATION
 }
-
-

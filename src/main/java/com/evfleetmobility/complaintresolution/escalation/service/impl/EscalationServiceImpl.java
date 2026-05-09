@@ -1,7 +1,6 @@
 package com.evfleetmobility.complaintresolution.escalation.service.impl;
 import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 
-
 import com.evfleetmobility.complaintresolution.escalation.service.EscalationService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;

@@ -11,5 +11,3 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     long countByUserId(Long userId);
     long countByUserIdAndStatus(Long userId, DocumentStatus status);
 }
-
-

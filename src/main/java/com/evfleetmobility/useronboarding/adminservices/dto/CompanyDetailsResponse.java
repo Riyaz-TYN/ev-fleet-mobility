@@ -17,10 +17,7 @@ public class CompanyDetailsResponse {
     private Double longitude;
     private String gstinDocumentUrl;
 
-    // Admin-only vendor fields
     private Double vendorRating;
     private Boolean vendorAvailability;
     private String expertise;
 }
-
-

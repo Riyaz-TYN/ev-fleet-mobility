@@ -10,14 +10,13 @@ import java.util.Optional;
 public interface OrganizationRepository extends JpaRepository<OrganizationDetails, Long> {
     boolean existsByPhoneNumber(String phoneNumber);
 
-    // Used during signup to find an existing org by exact company name
     Optional<OrganizationDetails> findByCompanyName(String companyName);
 
-    // Used when individual fills profile — case-insensitive match
     Optional<OrganizationDetails> findByCompanyNameIgnoreCase(String companyName);
 
-    // Used by admin to filter companies by approval status
     List<OrganizationDetails> findByApprovalStatus(ApprovalStatus status);
+
+    List<OrganizationDetails> findByVendorAvailabilityTrue();
+    List<OrganizationDetails> findByExpertiseIgnoreCase(String expertise);
+    List<OrganizationDetails> findByVendorAvailability(Boolean availability);
 }
-
-

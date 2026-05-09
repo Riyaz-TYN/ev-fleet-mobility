@@ -23,10 +23,7 @@ public class UserDetailsResponse {
     private String gstinDocumentUrl;
     private String companyApprovalStatus;
 
-    // Admin-only vendor fields
     private Double vendorRating;
     private Boolean vendorAvailability;
     private String expertise;
 }
-
-

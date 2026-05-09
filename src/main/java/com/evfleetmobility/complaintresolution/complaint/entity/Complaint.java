@@ -36,7 +36,6 @@ public class Complaint {
         this.createdAt = LocalDateTime.now();
     }
 
-
     public Long getId() {
         return id;
     }
@@ -101,7 +100,6 @@ public class Complaint {
         this.customerId = customerId;
     }
 
-    //  Vehicle ID getter & setter
     public String getVehicleId() {
         return vehicleId;
     }

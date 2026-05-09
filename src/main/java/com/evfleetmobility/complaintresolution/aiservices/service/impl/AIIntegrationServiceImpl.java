@@ -32,8 +32,6 @@ public class AIIntegrationServiceImpl implements AIIntegrationService {
             System.out.println("Calling external AI service for complaint: " + request.getComplaintId()
                     + " | attempt: " + request.getAiAttemptCount());
 
-
-//            temporary check
             System.out.println("===== AI PAYLOAD =====");
 
             System.out.println("Complaint ID: " + request.getComplaintId());
@@ -55,11 +53,6 @@ public class AIIntegrationServiceImpl implements AIIntegrationService {
 
             System.out.println("Service History: " + request.getServiceHistory());
 
-
-
-
-
-
             AIResponseDTO response = aiWebClient
                     .post()
                     .uri("/api/ai/analyze")
@@ -70,7 +63,7 @@ public class AIIntegrationServiceImpl implements AIIntegrationService {
                     .block();
 
             if (response != null) {
-                System.out.println("AI response received — suggestion: " + response.getSuggestion()
+                System.out.println("AI response received â€” suggestion: " + response.getSuggestion()
                         + " | confidence: " + response.getConfidence());
                 return response;
             }
@@ -79,7 +72,7 @@ public class AIIntegrationServiceImpl implements AIIntegrationService {
             return buildFallbackResponse(request);
 
         } catch (WebClientResponseException e) {
-            System.out.println("AI service HTTP error: " + e.getStatusCode() + " — " + e.getMessage());
+            System.out.println("AI service HTTP error: " + e.getStatusCode() + " â€” " + e.getMessage());
             return buildFallbackResponse(request);
 
         } catch (Exception e) {
@@ -88,10 +81,6 @@ public class AIIntegrationServiceImpl implements AIIntegrationService {
         }
     }
 
-    /**
-     * Fallback response ensures the workflow continues even if the AI service is down.
-     * The driver can still retry or escalate to vendor — workflow is never stuck.
-     */
     private AIResponseDTO buildFallbackResponse(AIRequestDTO request) {
         AIResponseDTO fallback = new AIResponseDTO();
         fallback.setSuggestion("AI service is currently unavailable. Please try again or escalate to support.");

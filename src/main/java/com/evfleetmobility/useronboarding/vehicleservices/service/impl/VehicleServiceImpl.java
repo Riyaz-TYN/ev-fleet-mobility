@@ -25,7 +25,7 @@ public class VehicleServiceImpl implements VehicleService {
 
 @Override
     public VehicleResponse addVehicle(VehicleRequest request) {
-        // User user = userRepo.findById(request.getUserId())
+
         User user = null;
         if (request.getUserId() != null) {
             user = userRepository.findById(request.getUserId())
@@ -116,5 +116,3 @@ public class VehicleServiceImpl implements VehicleService {
         return response;
     }
 }
-
-

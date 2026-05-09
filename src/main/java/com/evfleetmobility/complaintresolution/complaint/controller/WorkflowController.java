@@ -9,7 +9,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.HashMap;
 import java.util.Map;
 
-// Note: @CrossOrigin removed — CORS is handled globally in SecurityConfig via CorsConfigurationSource
 @RestController
 @RequestMapping("/api/workflow")
 public class WorkflowController {

@@ -15,5 +15,3 @@ public interface AdminService {
     void assignDriverToVehicle(Long callerId, com.evfleetmobility.useronboarding.adminservices.dto.DriverAssignmentRequest request);
     void updateVendorRating(Long callerId, Long targetUserId, Double rating);
 }
-
-

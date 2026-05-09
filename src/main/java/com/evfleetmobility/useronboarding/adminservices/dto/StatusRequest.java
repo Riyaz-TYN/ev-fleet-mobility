@@ -10,5 +10,3 @@ public class StatusRequest {
     private Long targetId;
     private ApprovalStatus status;
 }
-
-

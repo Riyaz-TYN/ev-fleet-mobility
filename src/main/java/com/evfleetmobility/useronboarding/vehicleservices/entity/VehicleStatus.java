@@ -6,5 +6,3 @@ public enum VehicleStatus {
     UNDER_MAINTENANCE,
     DECOMMISSIONED
 }
-
-

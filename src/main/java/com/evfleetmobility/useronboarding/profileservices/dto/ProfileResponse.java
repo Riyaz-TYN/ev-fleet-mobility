@@ -16,7 +16,6 @@ public class ProfileResponse {
     private Double latitude;
     private Double longitude;
 
-    // Individual fields
     private String fullName;
     private String personalEmail;
     private String gender;
@@ -25,7 +24,6 @@ public class ProfileResponse {
     private String addressLine1;
     private String addressLine2;
 
-    // Organization fields
     private String companyName;
     private String companyEmail;
     private String gstin;
@@ -34,8 +32,5 @@ public class ProfileResponse {
     private String companyAddressLine1;
     private String gstinDocumentUrl;
 
-    // Company approval status visible to individual users linked to an organization
     private String companyApprovalStatus;
 }
-
-

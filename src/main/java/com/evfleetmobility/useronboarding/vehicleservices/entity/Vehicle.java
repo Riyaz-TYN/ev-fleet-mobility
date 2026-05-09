@@ -65,5 +65,3 @@ public class Vehicle {
     public String getChassisNo() { return chassisNo; }
     public void setChassisNo(String chassisNo) { this.chassisNo = chassisNo; }
 }
-
-

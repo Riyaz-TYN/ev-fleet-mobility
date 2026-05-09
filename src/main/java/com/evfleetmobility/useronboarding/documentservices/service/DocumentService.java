@@ -13,5 +13,3 @@ public interface DocumentService {
     DocumentDownloadResponse getPanCard(Long userId);
     DocumentDownloadResponse getPanCardForAdmin(Long userId);
 }
-
-

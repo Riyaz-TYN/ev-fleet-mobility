@@ -33,5 +33,3 @@ public class ProfileController {
         return ResponseEntity.ok(new ApiResponse<>(message, null));
     }
 }
-
-
