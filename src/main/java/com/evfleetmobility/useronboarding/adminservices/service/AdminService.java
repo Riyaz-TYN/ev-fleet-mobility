@@ -12,6 +12,7 @@ public interface AdminService {
     List<UserDetailsResponse> getIndividualsByRoleAndStatus(Long callerId, ApprovalStatus status);
     List<CompanyDetailsResponse> getOrganizationsByRoleAndStatus(Long callerId, ApprovalStatus status);
     void handleUnifiedApproval(Long callerId, StatusRequest request);
+    void assignDriverToVehicle(Long callerId, com.evfleetmobility.useronboarding.adminservices.dto.DriverAssignmentRequest request);
 }
 
 

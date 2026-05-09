@@ -1,12 +1,12 @@
-package com.evfleetmobility.complaintresolution.complaintservices.vendor.service.impl;
+package com.evfleetmobility.complaintresolution.vendor.service.impl;
 import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 
 
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.service.VendorService;
+import com.evfleetmobility.complaintresolution.vendor.service.VendorService;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.entity.Vendor;
+import com.evfleetmobility.complaintresolution.vendor.entity.Vendor;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.repository.VendorRepository;
+import com.evfleetmobility.complaintresolution.vendor.repository.VendorRepository;
 
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
@@ -81,20 +81,31 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         List<Vendor> availableVendors =
                 vendorRepository.findByAvailabilityTrue();
 
-        if (availableVendors.isEmpty()) {
+        List<Vendor> validVendors = availableVendors.stream()
+                .filter(v -> v.getLatitude() != null && v.getLongitude() != null)
+                .toList();
 
-            throw new RuntimeException(
-                    "No available vendors found"
+        if (validVendors.isEmpty()) {
+
+            System.out.println("⚠️ No available vendors found. Escalating to Manager.");
+            
+            // Save vendor into complaint table as escalated
+            Complaint complaint = complaintRepository.findById(complaintId)
+                    .orElseThrow(() -> new RuntimeException("Complaint not found"));
+            
+            complaint.setStatus("ESCALATED_TO_MANAGER");
+            complaintRepository.save(complaint);
+            
+            auditLogService.saveLog(
+                    complaintId, vehicleId, "VENDOR_ESCALATED", "SYSTEM", "AI_PROCESSED", "ESCALATED_TO_MANAGER", 
+                    "No valid vendors available for assignment", new HashMap<>()
             );
+
+            throw new org.camunda.bpm.engine.delegate.BpmnError("NO_VENDOR", "No valid vendors found");
         }
 
         // Find nearest vendor
-        Vendor selectedVendor = availableVendors.stream()
-
-                .filter(v ->
-                        v.getLatitude() != null
-                                && v.getLongitude() != null
-                )
+        Vendor selectedVendor = validVendors.stream()
 
                 .min(
                         Comparator.comparingDouble((Vendor v) ->

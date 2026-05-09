@@ -1,4 +1,4 @@
-package com.evfleetmobility.complaintresolution.complaintservices.vendor.service;
+package com.evfleetmobility.complaintresolution.vendor.service;
 
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;

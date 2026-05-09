@@ -1,9 +1,9 @@
-package com.evfleetmobility.complaintresolution.complaintservices.vendor.service;
+package com.evfleetmobility.complaintresolution.vendor.service;
 
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.entity.Vendor;
+import com.evfleetmobility.complaintresolution.vendor.entity.Vendor;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.repository.VendorRepository;
+import com.evfleetmobility.complaintresolution.vendor.repository.VendorRepository;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.delegate.DelegateExecution;

@@ -1,4 +1,4 @@
-package com.evfleetmobility.complaintresolution.complaintservices.vendor.entity;
+package com.evfleetmobility.complaintresolution.vendor.entity;
 
 import jakarta.persistence.*;
 

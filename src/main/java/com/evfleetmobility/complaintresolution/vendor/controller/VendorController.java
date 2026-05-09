@@ -1,10 +1,10 @@
-package com.evfleetmobility.complaintresolution.complaintservices.vendor.controller;
+package com.evfleetmobility.complaintresolution.vendor.controller;
 
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.entity.Vendor;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.service.VendorService;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorIdRequestDTO;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorExpertiseRequestDTO;
-import com.evfleetmobility.complaintresolution.complaintservices.vendor.dto.VendorAvailabilityRequestDTO;
+import com.evfleetmobility.complaintresolution.vendor.entity.Vendor;
+import com.evfleetmobility.complaintresolution.vendor.service.VendorService;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorIdRequestDTO;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorExpertiseRequestDTO;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorAvailabilityRequestDTO;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
