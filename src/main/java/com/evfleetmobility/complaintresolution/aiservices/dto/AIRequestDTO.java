@@ -19,7 +19,7 @@ public class AIRequestDTO {
     private List<ServiceHistoryDTO> serviceHistory;
 
     private Integer aiAttemptCount;
-    private String previousSuggestion;
+    private String userFollowUp;
 
     private Long userId;
 
@@ -61,8 +61,8 @@ public class AIRequestDTO {
     public Integer getAiAttemptCount() { return aiAttemptCount; }
     public void setAiAttemptCount(Integer aiAttemptCount) { this.aiAttemptCount = aiAttemptCount; }
 
-    public String getPreviousSuggestion() { return previousSuggestion; }
-    public void setPreviousSuggestion(String previousSuggestion) { this.previousSuggestion = previousSuggestion; }
+    public String getUserFollowUp() { return userFollowUp; }
+    public void setUserFollowUp(String userFollowUp) { this.userFollowUp = userFollowUp; }
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }

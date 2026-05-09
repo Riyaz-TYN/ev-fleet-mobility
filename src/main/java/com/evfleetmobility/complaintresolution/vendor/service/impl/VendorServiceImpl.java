@@ -6,6 +6,7 @@ import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.useronboarding.profileservices.entity.OrganizationDetails;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
 import com.evfleetmobility.useronboarding.profileservices.repository.OrganizationRepository;
+import com.evfleetmobility.useronboarding.authservices.entity.ApprovalStatus;
 
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
@@ -62,7 +63,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 || complaintLongitude == null) {
 
             System.out.println(
-                    "âš ï¸ Location missing. Using mock coordinates."
+                    "âš ï¸  Location missing. Using mock coordinates."
             );
 
             complaintLatitude = 11.0168;
@@ -75,8 +76,17 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         final double finalComplaintLongitude =
                 complaintLongitude;
 
+        String predictedCategory =
+                (String) execution.getVariable("predictedCategory");
+
+        String searchCategory = (predictedCategory != null && !predictedCategory.isBlank()) 
+                ? predictedCategory 
+                : issueCategory;
+
+        System.out.println(" Searching for vendors with expertise: " + searchCategory);
+
         List<OrganizationDetails> availableVendors =
-                organizationRepo.findByVendorAvailabilityTrue();
+                organizationRepo.findByApprovalStatusAndVendorAvailabilityTrue(ApprovalStatus.APPROVED);
 
         List<OrganizationDetails> validVendors = availableVendors.stream()
                 .filter(v -> v.getLatitude() != null && v.getLongitude() != null)
@@ -84,24 +94,37 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
 
         if (validVendors.isEmpty()) {
 
-            System.out.println("âš ï¸ No available vendors found. Escalating to Manager.");
+            System.out.println("âš ï¸  No approved and available vendors found. Escalating to Manager.");
 
             Complaint complaint = complaintRepository.findById(complaintId)
                     .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
             complaint.setStatus("ESCALATED_TO_MANAGER");
+            complaint.setEscalationReason("No approved vendors available for assignment");
             complaintRepository.save(complaint);
 
             auditLogService.saveLog(
-                    complaintId, vehicleId, "VENDOR_ESCALATED", "SYSTEM", "AI_PROCESSED", "ESCALATED_TO_MANAGER", 
-                    "No valid vendors available for assignment", new HashMap<>()
+                    complaintId, vehicleId, "VENDOR_UNRESOLVED", "SYSTEM", "AI_PROCESSED", "ESCALATED_TO_MANAGER",
+                    "No approved vendors available for assignment", new HashMap<>()
             );
 
-            throw new org.camunda.bpm.engine.delegate.BpmnError("NO_VENDOR", "No valid vendors found");
+            throw new org.camunda.bpm.engine.delegate.BpmnError("NO_VENDOR", "No approved vendors found");
         }
 
-        OrganizationDetails selectedVendor = validVendors.stream()
+        // Filter by expertise if possible
+        List<OrganizationDetails> expertVendors = validVendors.stream()
+                .filter(v -> v.getExpertise() != null && searchCategory != null &&
+                        (v.getExpertise().toLowerCase().contains(searchCategory.toLowerCase()) ||
+                         searchCategory.toLowerCase().contains(v.getExpertise().toLowerCase())))
+                .toList();
 
+        List<OrganizationDetails> selectionPool = expertVendors.isEmpty() ? validVendors : expertVendors;
+
+        if (expertVendors.isEmpty()) {
+            System.out.println("âš ï¸  No vendors with matching expertise found. Selecting nearest available.");
+        }
+
+        OrganizationDetails selectedVendor = selectionPool.stream()
                 .min(
                         Comparator.comparingDouble((OrganizationDetails v) ->
                                 calculateDistance(
@@ -116,12 +139,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                                 ).reversed()
                         )
                 )
-
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "No vendor with valid location found"
-                        )
-                );
+                .orElseThrow(() -> new RuntimeException("No vendor found in selection pool"));
 
         double distanceKm =
                 calculateDistance(
@@ -177,6 +195,8 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         complaint.setAssignedTeam(
                 selectedVendor.getCompanyName()
         );
+
+        complaint.setVendorId(selectedVendor.getId());
 
         complaint.setStatus("ASSIGNED_TO_VENDOR");
 
@@ -252,7 +272,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
     }
 
     public List<OrganizationDetails> getAvailableVendors() {
-        return organizationRepo.findByVendorAvailabilityTrue();
+        return organizationRepo.findByApprovalStatusAndVendorAvailabilityTrue(ApprovalStatus.APPROVED);
     }
 
     public List<OrganizationDetails> getVendorsByExpertise(
@@ -270,11 +290,11 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
     }
 
     public List<Complaint> getAssignedComplaints(
-            String vendorName) {
+            Long vendorId) {
 
         return complaintRepository
-                .findByAssignedTeamOrderByCreatedAtDesc(
-                        vendorName
+                .findByVendorIdOrderByCreatedAtDesc(
+                        vendorId
                 );
     }
 

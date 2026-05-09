@@ -16,7 +16,7 @@ public interface OrganizationRepository extends JpaRepository<OrganizationDetail
 
     List<OrganizationDetails> findByApprovalStatus(ApprovalStatus status);
 
-    List<OrganizationDetails> findByVendorAvailabilityTrue();
+    List<OrganizationDetails> findByApprovalStatusAndVendorAvailabilityTrue(ApprovalStatus status);
     List<OrganizationDetails> findByExpertiseIgnoreCase(String expertise);
     List<OrganizationDetails> findByVendorAvailability(Boolean availability);
 }

@@ -14,7 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @RestController
 @RequestMapping("/api/audit-logs")
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN','MANAGER')")
 public class AuditLogController {
 
     private final AuditLogService auditLogService;

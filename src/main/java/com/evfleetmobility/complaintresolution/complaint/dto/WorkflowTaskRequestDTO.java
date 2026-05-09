@@ -9,4 +9,5 @@ public class WorkflowTaskRequestDTO {
     private Boolean continueAi;
     private Boolean vendorResolved;
     private String managerDecision;
+    private String userFollowUp;
 }

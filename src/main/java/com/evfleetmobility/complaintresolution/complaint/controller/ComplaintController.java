@@ -103,10 +103,10 @@ public class ComplaintController {
     @PostMapping("/assigned")
     @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> getAssignedComplaints(
-            @RequestBody VendorNameRequestDTO request
+            @RequestBody com.evfleetmobility.complaintresolution.vendor.dto.VendorIdRequestDTO request
     ) {
         return ResponseEntity.ok(
-                complaintService.getAssignedComplaintsByVendorName(request.getVendorName())
+                complaintService.getAssignedComplaintsByVendorId(request.getVendorId())
         );
     }
 
@@ -140,12 +140,12 @@ public class ComplaintController {
     @PutMapping("/assign")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> approveAndAssign(
-            @RequestBody ManagerApproveRequestDTO request
+            @RequestBody com.evfleetmobility.complaintresolution.manager.dto.ManagerApproveRequestDTO request
     ) {
         return ResponseEntity.ok(
                 complaintService.approveAndAssignComplaint(
                         request.getComplaintId(),
-                        request.getTeamName()
+                        request.getVendorId()
                 )
         );
     }
@@ -189,5 +189,17 @@ public class ComplaintController {
         return ResponseEntity.ok(
                 complaintService.getVendorById(request.getVendorId())
         );
+    }
+
+    @PostMapping("/{complaintId}/nearby-vendors")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<?> getNearbyVendors(@PathVariable Long complaintId) {
+        return ResponseEntity.ok(complaintService.getNearbyVendors(complaintId));
+    }
+
+    @PutMapping("/reassign")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<?> reassignVendor(@RequestBody VendorIdRequestDTO request) {
+        return ResponseEntity.ok(complaintService.reassignVendor(request.getComplaintId(), request.getVendorId()));
     }
 }

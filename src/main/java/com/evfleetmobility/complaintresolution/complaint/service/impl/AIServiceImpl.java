@@ -153,9 +153,10 @@ public class AIServiceImpl implements AIService, JavaDelegate {
         }
 
         if (aiAttemptCount > 1) {
-            String previousSuggestion = (String) execution.getVariable("aiSuggestion");
-            request.setPreviousSuggestion(previousSuggestion);
+            String userFollowUp = (String) execution.getVariable("userFollowUp");
+            request.setUserFollowUp(userFollowUp);
         }
+
 
         enrichWithVehicleContext(request, vehicleId);
 

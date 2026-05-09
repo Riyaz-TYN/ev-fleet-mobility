@@ -12,7 +12,7 @@ public interface VendorService {
     List<OrganizationDetails> getAvailableVendors();
     List<OrganizationDetails> getVendorsByExpertise(String expertise);
     List<OrganizationDetails> getVendorsByAvailability(Boolean availability);
-    List<Complaint> getAssignedComplaints(String vendorName);
+    List<Complaint> getAssignedComplaints(Long vendorId);
     String updateComplaintStatus(Long complaintId,
             String status);
     String resolveComplaint(Long complaintId,

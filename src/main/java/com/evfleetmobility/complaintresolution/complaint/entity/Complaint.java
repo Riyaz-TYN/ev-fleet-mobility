@@ -10,7 +10,7 @@ public class Complaint {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String domain;
+
 
     private String status;
 
@@ -23,13 +23,22 @@ public class Complaint {
     @Column(columnDefinition = "TEXT")
     private String data;
 
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
 
     @Column(name = "customer_id")
     private String customerId;
 
     @Column(name = "vehicle_id")
     private String vehicleId;
+
+    @Column(name = "vendor_id")
+    private Long vendorId;
+
+    private Double latitude;
+    private Double longitude;
+
+    @Column(name = "escalation_reason", columnDefinition = "TEXT")
+    private String escalationReason;
 
     public Complaint() {
         this.status = "OPEN";
@@ -40,13 +49,6 @@ public class Complaint {
         return id;
     }
 
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
 
     public String getStatus() {
         return status;
@@ -78,6 +80,38 @@ public class Complaint {
 
     public void setAssignedTeam(String assignedTeam) {
         this.assignedTeam = assignedTeam;
+    }
+
+    public Long getVendorId() {
+        return vendorId;
+    }
+
+    public void setVendorId(Long vendorId) {
+        this.vendorId = vendorId;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getEscalationReason() {
+        return escalationReason;
+    }
+
+    public void setEscalationReason(String escalationReason) {
+        this.escalationReason = escalationReason;
     }
 
     public String getData() {

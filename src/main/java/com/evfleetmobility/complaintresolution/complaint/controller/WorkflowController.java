@@ -38,6 +38,7 @@ public class WorkflowController {
         Map<String, Object> variables = new HashMap<>();
         variables.put("resolved", resolved);
         variables.put("continueAi", continueAi);
+        variables.put("userFollowUp", request.getUserFollowUp());
 
         taskService.complete(request.getTaskId(), variables);
 

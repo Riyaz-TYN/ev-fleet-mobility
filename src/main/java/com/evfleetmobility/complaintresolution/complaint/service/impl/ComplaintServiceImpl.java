@@ -14,6 +14,7 @@ import com.evfleetmobility.useronboarding.profileservices.repository.Organizatio
 import com.evfleetmobility.useronboarding.vehicleservices.repository.VehicleRepository;
 import com.evfleetmobility.useronboarding.authservices.repository.UserRepository;
 import com.evfleetmobility.useronboarding.authservices.entity.UserType;
+import com.evfleetmobility.useronboarding.authservices.entity.ApprovalStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.camunda.bpm.engine.RuntimeService;
@@ -127,6 +128,8 @@ public class ComplaintServiceImpl implements ComplaintService {
             complaint.setData(jsonData);
             complaint.setCustomerId(callerUserIdStr);  
             complaint.setVehicleId(vehicleId);
+            complaint.setLatitude(request.getLatitude());
+            complaint.setLongitude(request.getLongitude());
 
             Complaint savedComplaint = complaintRepository.save(complaint);
 
@@ -205,13 +208,11 @@ public class ComplaintServiceImpl implements ComplaintService {
             return complaintRepository.findByCustomerIdOrderByCreatedAtDesc(String.valueOf(currentUserId));
         }
 
-        if ("VENDOR_ADMIN".equalsIgnoreCase(role)) {
-
+        if ("VENDOR_ADMIN".equalsIgnoreCase(role) || "VENDOR".equalsIgnoreCase(role)) {
             return userRepository.findById(currentUserId)
-                    .filter(u -> u.getOrganizationDetails() != null
-                            && u.getOrganizationDetails().getCompanyName() != null)
-                    .map(u -> complaintRepository.findByAssignedTeamOrderByCreatedAtDesc(
-                            u.getOrganizationDetails().getCompanyName()))
+                    .filter(u -> u.getOrganizationDetails() != null)
+                    .map(u -> complaintRepository.findByVendorIdOrderByCreatedAtDesc(
+                            u.getOrganizationDetails().getId()))
                     .orElse(java.util.List.of());
         }
 
@@ -239,8 +240,8 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public List<Complaint> getAssignedComplaintsByVendorName(String vendorName) {
-        return vendorService.getAssignedComplaints(vendorName);
+    public List<Complaint> getAssignedComplaintsByVendorId(Long vendorId) {
+        return vendorService.getAssignedComplaints(vendorId);
     }
 
     @Override
@@ -254,8 +255,8 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public Complaint approveAndAssignComplaint(Long complaintId, String teamName) {
-        return managerDashboardService.approveAndAssignComplaint(complaintId, teamName);
+    public Complaint approveAndAssignComplaint(Long complaintId, Long vendorId) {
+        return managerDashboardService.approveAndAssignComplaint(complaintId, vendorId);
     }
 
     @Override
@@ -270,7 +271,7 @@ public class ComplaintServiceImpl implements ComplaintService {
 
     @Override
     public List<OrganizationDetails> getAvailableVendors() {
-        return organizationRepo.findByVendorAvailabilityTrue();
+        return organizationRepo.findByApprovalStatusAndVendorAvailabilityTrue(ApprovalStatus.APPROVED);
     }
 
     @Override
@@ -307,5 +308,15 @@ public class ComplaintServiceImpl implements ComplaintService {
     @Override
     public List<Complaint> getComplaintsByPriority(String priority) {
         return complaintRepository.findByPriorityOrderByCreatedAtDesc(priority);
+    }
+
+    @Override
+    public Complaint reassignVendor(Long complaintId, Long vendorId) {
+        return managerDashboardService.reassignVendor(complaintId, vendorId);
+    }
+
+    @Override
+    public List<com.evfleetmobility.complaintresolution.vendor.dto.VendorDTO> getNearbyVendors(Long complaintId) {
+        return managerDashboardService.getNearbyVendorsForComplaint(complaintId);
     }
 }

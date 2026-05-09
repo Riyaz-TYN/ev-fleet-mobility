@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class ManagerApproveRequestDTO {
     private Long complaintId;
-    private String teamName;
+    private Long vendorId;
 }
