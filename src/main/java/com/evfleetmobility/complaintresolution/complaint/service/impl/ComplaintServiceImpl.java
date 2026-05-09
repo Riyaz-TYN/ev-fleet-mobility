@@ -99,22 +99,39 @@ public class ComplaintServiceImpl implements ComplaintService {
                     ? data.get("location").toString()
                     : "UNKNOWN";
 
-            String vehicleId = data.get("vehicleId") != null
-                    ? data.get("vehicleId").toString()
-                    : "";
 
+
+
+
+//            String vehicleId = data.get("vehicleId") != null
+//                    ? data.get("vehicleId").toString()
+//                    : "";
+
+
+//        Im as of now commenting this
             // ---- Validate vehicle ownership via useronboarding VehicleRepository ----
-            if (!vehicleId.isBlank()) {
-                try {
-                    Long vehicleIdLong = Long.parseLong(vehicleId);
-                    boolean vehicleExists = vehicleRepository.existsById(vehicleIdLong);
-                    if (!vehicleExists) {
-                        return "Error: Vehicle with ID " + vehicleId + " does not exist in the system.";
-                    }
-                } catch (NumberFormatException e) {
-                    return "Error: vehicleId must be a valid numeric ID.";
-                }
-            }
+//            if (!vehicleId.isBlank()) {
+//                try {
+//                    Long vehicleIdLong = Long.parseLong(vehicleId);
+//                    boolean vehicleExists = vehicleRepository.existsById(vehicleIdLong);
+//                    if (!vehicleExists) {
+//                        return "Error: Vehicle with ID " + vehicleId + " does not exist in the system.";
+//                    }
+//                } catch (NumberFormatException e) {
+//                    return "Error: vehicleId must be a valid numeric ID.";
+//                }
+//            }
+
+            Long userId = Long.parseLong(customerId);
+
+            var vehicle = vehicleRepository
+                    .findByUserId(userId)
+                    .orElseThrow(() ->
+                            new RuntimeException("No vehicle found for this user")
+                    );
+
+            String vehicleId = vehicle.getId().toString();
+
 
             String jsonData = objectMapper.writeValueAsString(data);
 

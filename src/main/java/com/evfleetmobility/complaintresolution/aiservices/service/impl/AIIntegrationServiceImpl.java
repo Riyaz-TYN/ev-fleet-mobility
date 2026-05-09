@@ -32,6 +32,34 @@ public class AIIntegrationServiceImpl implements AIIntegrationService {
             System.out.println("Calling external AI service for complaint: " + request.getComplaintId()
                     + " | attempt: " + request.getAiAttemptCount());
 
+
+//            temporary check
+            System.out.println("===== AI PAYLOAD =====");
+
+            System.out.println("Complaint ID: " + request.getComplaintId());
+            System.out.println("Title: " + request.getTitle());
+            System.out.println("Description: " + request.getDescription());
+            System.out.println("Issue Type: " + request.getIssueType());
+            System.out.println("Priority: " + request.getPriority());
+
+            System.out.println("Vehicle ID: " + request.getVehicleId());
+            System.out.println("Vehicle Model: " + request.getVehicleModel());
+            System.out.println("Vehicle Make: " + request.getVehicleMake());
+
+            System.out.println("Year: " + request.getYearOfManufacture());
+            System.out.println("Battery Capacity: " + request.getBatteryCapacityKwh());
+
+            System.out.println("AI Attempt Count: " + request.getAiAttemptCount());
+
+            System.out.println("User ID: " + request.getUserId());
+
+            System.out.println("Service History: " + request.getServiceHistory());
+
+
+
+
+
+
             AIResponseDTO response = aiWebClient
                     .post()
                     .uri("/api/ai/analyze")

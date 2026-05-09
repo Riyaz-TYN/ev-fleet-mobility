@@ -46,14 +46,20 @@ public class ComplaintController {
     // =========================================================
     @PostMapping
     @PreAuthorize("hasRole('DRIVER')")
-    public ResponseEntity<String> saveComplaint(
+    public ResponseEntity<?> saveComplaint(
             @RequestBody ComplaintRequestDTO request
     ) {
         String customerId = authContextService.getCurrentUserId().toString();
-        String result = complaintService.saveComplaint(request, customerId);
-        return ResponseEntity.ok(result);
-    }
 
+        String result = complaintService.saveComplaint(request, customerId);
+
+        return ResponseEntity.ok(
+                java.util.Map.of(
+                        "message", result,
+                        "payloadSentToAI", request
+                )
+        );
+    }
     // =========================================================
     // GET COMPLAINTS (ROLE-BASED — single endpoint, smart filter)
     //   DRIVER       -> their own complaints (by customerId)

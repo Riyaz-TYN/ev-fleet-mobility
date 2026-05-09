@@ -1,0 +1,205 @@
+# EV Fleet Mobility — Running and Testing Guide
+
+This guide will walk you through how to run the enterprise project and test the complete Camunda complaint workflow, from driver submission through AI retries, vendor assignment, and manager escalation.
+
+## 1. Running the Project
+
+### Prerequisites
+- Java 21
+- PostgreSQL running locally (or remote)
+- Maven
+
+### Environment Variables
+Before running the Spring Boot application, ensure you have the necessary environment variables set in your IDE or terminal. From `application.properties`, these are required:
+```properties
+DB_URL=jdbc:postgresql://localhost:5432/evfleet
+DB_USERNAME=postgres
+DB_PASSWORD=yourpassword
+JWT_ACCESS_EXPIRY=86400000
+JWT_REFRESH_EXPIRY=604800000
+AWS_S3_BUCKET_NAME=your-bucket
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=dummy
+AWS_SECRET_ACCESS_KEY=dummy
+AI_SERVICE_URL=http://localhost:8000  # Or ngrok URL
+```
+
+### Start the Application
+Run the project using Maven:
+```bash
+./mvnw spring-boot:run
+```
+
+Once running, Camunda and your Spring Boot APIs will be available (usually on `http://localhost:8080`).
+
+---
+
+## 2. Authentication & Roles
+
+Because this uses enterprise RBAC, you **must include a JWT Bearer token** in the `Authorization` header for all requests.
+
+You will need tokens for three different users to test the full flow:
+1. **Driver Token** (`ROLE_DRIVER`)
+2. **Vendor Admin Token** (`ROLE_VENDOR_ADMIN`)
+3. **Manager Token** (`ROLE_MANAGER`)
+
+*(Obtain these tokens by registering/logging in users through your `authservices` endpoints).*
+
+---
+
+## 3. Workflow Testing: Step-by-Step
+
+### Phase 1: Creating the Complaint (Role: DRIVER)
+
+**Endpoint:** `POST /api/complaints`
+**Headers:** `Authorization: Bearer <DRIVER_TOKEN>`
+
+**Request Body:**
+```json
+{
+  "complaintData": {
+    "vehicleId": "1",
+    "issueCategory": "Battery",
+    "issueDescription": "The vehicle does not start after charging overnight",
+    "location": "Downtown Charging Station"
+  }
+}
+```
+
+**What Happens:**
+1. Complaint is saved in the DB.
+2. Camunda `complaintWorkflow` starts.
+3. The `aiTask` (Service Task) runs automatically. The backend auto-fetches vehicle and service history, then calls your FastAPI service at `AI_SERVICE_URL`.
+4. The workflow pauses at the `userTask` ("User Reviews AI").
+
+---
+
+### Phase 2: Testing User Gateways (Role: DRIVER)
+
+To continue the workflow, you must submit a user response. First, you need the Camunda `taskId` for the "User Reviews AI" task. *(You can find this in the Camunda Cockpit, or by querying your local database's `act_ru_task` table, or via Camunda REST API `GET /engine-rest/task?processInstanceId=...`).*
+
+**Endpoint:** `POST /api/workflow/user-response`
+**Headers:** `Authorization: Bearer <DRIVER_TOKEN>`
+
+#### Scenario A: User is satisfied (Resolved)
+```json
+{
+  "taskId": "YOUR_TASK_ID",
+  "resolved": true,
+  "continueAi": false
+}
+```
+*Result:* Workflow routes to `userResolvedTask` and finishes at `Closed`.
+
+#### Scenario B: User wants to retry AI (AI Attempt < 3)
+```json
+{
+  "taskId": "YOUR_TASK_ID",
+  "resolved": false,
+  "continueAi": true
+}
+```
+*Result:* Workflow routes back to `aiTask`. The AI service is called again (with `previousSuggestion` included). The workflow will pause again at a new `userTask`. 
+
+#### Scenario C: User gives up / AI Attempts >= 3
+```json
+{
+  "taskId": "YOUR_TASK_ID",
+  "resolved": false,
+  "continueAi": false
+}
+```
+*(Or, if you hit `continueAi: true` 3 times, the workflow will automatically force this route).*
+*Result:* Workflow routes to `vendorAssign`, then `notifyVendor`, and pauses at `vendorTask` ("Vendor Resolves").
+
+---
+
+### Phase 3: Testing Vendor Gateways (Role: VENDOR_ADMIN)
+
+Assuming the complaint reached the Vendor, you need the new `taskId` for the "Vendor Resolves" task.
+
+**Endpoint:** `POST /api/workflow/vendor-response`
+**Headers:** `Authorization: Bearer <VENDOR_ADMIN_TOKEN>`
+
+#### Scenario D: Vendor successfully resolves the issue
+```json
+{
+  "taskId": "YOUR_VENDOR_TASK_ID",
+  "vendorResolved": true
+}
+```
+*Result:* Workflow routes to `vendorResolvedTask` and ends at `Resolved`.
+
+#### Scenario E: Vendor fails / escalates
+```json
+{
+  "taskId": "YOUR_VENDOR_TASK_ID",
+  "vendorResolved": false
+}
+```
+*Result:* Workflow routes to `escalateTask` and pauses at `managerTask` ("Manager Review").
+
+> **SLA Note:** If the vendor does not respond within 2 hours (`PT2H`), the SLA Timer boundary event will automatically cancel the vendor task and route directly to the `escalateTask`.
+
+---
+
+### Phase 4: Testing Manager Gateways (Role: MANAGER)
+
+Assuming the complaint escalated, you need the new `taskId` for the "Manager Review" task.
+
+**Endpoint:** `POST /api/workflow/manager-response`
+**Headers:** `Authorization: Bearer <MANAGER_TOKEN>`
+
+#### Scenario F: Manager Forces Resolution
+```json
+{
+  "taskId": "YOUR_MANAGER_TASK_ID",
+  "managerDecision": "RESOLVE"
+}
+```
+*Result:* Workflow routes to `managerDecisionTask`, updates DB, and ends at `Resolved by Manager`.
+
+#### Scenario G: Manager Rejects Complaint
+```json
+{
+  "taskId": "YOUR_MANAGER_TASK_ID",
+  "managerDecision": "REJECT"
+}
+```
+*Result:* Workflow routes to `managerDecisionTask`, updates DB, and ends at `Rejected`.
+
+#### Scenario H: Manager Retries (Sends back to Vendor)
+```json
+{
+  "taskId": "YOUR_MANAGER_TASK_ID",
+  "managerDecision": "RETRY"
+}
+```
+*Result:* Workflow loops all the way back to `vendorAssign`, and a new vendor task is created.
+
+---
+
+## 4. How to View Camunda State
+
+If you included the Camunda Webapp dependency in your `pom.xml`, you can visually verify everything:
+
+1. Open your browser and go to: `http://localhost:8080/camunda/app/cockpit/default/`
+2. Log in (default is usually `demo` / `demo`, unless overridden).
+3. Click on "Processes" -> "Complaint Workflow".
+4. Here you can see **exactly** where the blue token is currently sitting in the BPMN diagram.
+5. You can click on specific process instances to view their **Variables** (`aiAttemptCount`, `resolved`, `aiSuggestion`, etc.) in real-time.
+
+## 5. Testing the AI Integration Specifically
+
+To test that the AI layer is working without the frontend:
+
+1. Have your external FastAPI server running (e.g., at `https://overtly-monetary-sensuous.ngrok-free.dev`).
+2. Ensure you have a `Vehicle` with ID `1` in your database assigned to your user, and ideally a few `ServiceHistory` records linked to it.
+3. Submit the complaint via Postman.
+4. Check the FastAPI logs — you should see a `POST /api/ai/analyze` incoming request with the fully populated `AIRequestDTO`.
+5. Check your Spring Boot logs. You should see:
+   ```text
+   Calling external AI service for complaint: ...
+   AI response received — suggestion: ...
+   ```
+6. Check your `queries` and `responses` tables in the database to ensure the FastAPI service successfully called your gateway back to save the interaction.
