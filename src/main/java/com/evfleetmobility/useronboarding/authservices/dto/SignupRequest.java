@@ -22,6 +22,7 @@ public class SignupRequest {
     private String phoneNumber;
     private String countryCode;
     private String gender;
+    @NotBlank(message = "Company name is required")
     private String companyName;
 
     public String getFullName() { return fullName; }

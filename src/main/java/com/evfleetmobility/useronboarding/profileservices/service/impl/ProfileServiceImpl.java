@@ -49,7 +49,6 @@ public class ProfileServiceImpl implements ProfileService {
             if (request.getLatitude() != null) ind.setLatitude(request.getLatitude());
             if (request.getLongitude() != null) ind.setLongitude(request.getLongitude());
 
-            ind.setVendorRating(request.getVendorRating());
             ind.setVendorAvailability(request.getVendorAvailability());
             ind.setExpertise(request.getExpertise());
 
@@ -90,7 +89,6 @@ public class ProfileServiceImpl implements ProfileService {
             if (request.getLatitude() != null) org.setLatitude(request.getLatitude());
             if (request.getLongitude() != null) org.setLongitude(request.getLongitude());
 
-            org.setVendorRating(request.getVendorRating());
             org.setVendorAvailability(request.getVendorAvailability());
             org.setExpertise(request.getExpertise());
 

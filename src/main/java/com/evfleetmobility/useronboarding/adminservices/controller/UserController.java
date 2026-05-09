@@ -59,6 +59,16 @@ public class UserController {
         adminService.assignDriverToVehicle(callerId, request);
         return ResponseEntity.ok(new ApiResponse<>("Driver assigned to vehicle successfully", null));
     }
+    @PutMapping("/{targetUserId}/rating")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<ApiResponse<String>> updateVendorRating(
+            Principal principal,
+            @PathVariable Long targetUserId,
+            @RequestBody com.evfleetmobility.useronboarding.adminservices.dto.VendorRatingRequest request) {
+        Long callerId = Long.valueOf(principal.getName());
+        adminService.updateVendorRating(callerId, targetUserId, request.getRating());
+        return ResponseEntity.ok(new ApiResponse<>("Vendor rating updated successfully", null));
+    }
 }
 
 

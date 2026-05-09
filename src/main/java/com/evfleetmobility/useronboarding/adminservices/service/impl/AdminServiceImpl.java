@@ -188,6 +188,30 @@ public class AdminServiceImpl implements AdminService {
         vehicleRepository.save(vehicle);
     }
 
+    @Override
+    @Transactional
+    public void updateVendorRating(Long callerId, Long targetUserId, Double rating) {
+        User caller = userRepository.findById(callerId)
+                .orElseThrow(() -> new UserNotFoundException("Caller not found"));
+
+        if (!"SUPER_ADMIN".equalsIgnoreCase(caller.getRole()) && !"ADMIN".equalsIgnoreCase(caller.getRole())) {
+            throw new AccessDeniedException("Only Admins can update vendor ratings");
+        }
+
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new UserNotFoundException("Target user not found"));
+
+        if (targetUser.getUserType() == UserType.ORGANIZATION && targetUser.getOrganizationDetails() != null) {
+            targetUser.getOrganizationDetails().setVendorRating(rating);
+        } else if (targetUser.getUserType() == UserType.INDIVIDUAL && targetUser.getIndividualDetails() != null) {
+            targetUser.getIndividualDetails().setVendorRating(rating);
+        } else {
+            throw new RuntimeException("Target user does not have a profile capable of receiving a vendor rating");
+        }
+        
+        userRepository.save(targetUser);
+    }
+
     private UserDetailsResponse mapToUserDetailsResponse(User user) {
         UserDetailsResponse.UserDetailsResponseBuilder builder = UserDetailsResponse.builder()
                 .id(user.getId())
