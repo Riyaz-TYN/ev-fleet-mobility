@@ -130,6 +130,8 @@ public class ComplaintServiceImpl implements ComplaintService {
             complaint.setVehicleId(vehicleId);
             complaint.setLatitude(request.getLatitude());
             complaint.setLongitude(request.getLongitude());
+            
+            complaint.addWorkHistory("Complaint Raised", "Driver (ID: " + callerUserIdStr + ")", issueDescription);
 
             Complaint savedComplaint = complaintRepository.save(complaint);
 
@@ -256,7 +258,14 @@ public class ComplaintServiceImpl implements ComplaintService {
 
     @Override
     public Complaint approveAndAssignComplaint(Long complaintId, Long vendorId) {
-        return managerDashboardService.approveAndAssignComplaint(complaintId, vendorId);
+        Complaint complaint = managerDashboardService.approveAndAssignComplaint(complaintId, vendorId);
+        
+        OrganizationDetails vendor = organizationRepo.findById(vendorId)
+                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+        
+        complaint.addWorkHistory("Vendor Assigned", vendor.getCompanyName() + " (ID: " + vendorId + ")", null);
+        
+        return complaintRepository.save(complaint);
     }
 
     @Override
@@ -265,8 +274,8 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public String managerDecision(Long complaintId, String decision) {
-        return managerService.managerDecision(complaintId, decision);
+    public String managerDecision(Long complaintId, String decision, String remarks) {
+        return managerService.managerDecision(complaintId, decision, remarks);
     }
 
     @Override

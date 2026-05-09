@@ -1,6 +1,6 @@
 package com.evfleetmobility.complaintresolution.manager.service.impl;
-import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 
+import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 import com.evfleetmobility.complaintresolution.manager.service.ManagerService;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
@@ -10,6 +10,8 @@ import org.camunda.bpm.engine.task.Task;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @Service
 public class ManagerServiceImpl implements ManagerService {
@@ -23,23 +25,13 @@ public class ManagerServiceImpl implements ManagerService {
     @Autowired
     private AuditLogService auditLogService;
 
-    public String managerDecision(
-            Long complaintId,
-            String decision) {
-
-        Complaint complaint =
-                complaintRepository.findById(complaintId)
-                        .orElseThrow(
-                                () -> new RuntimeException(
-                                        "Complaint not found"
-                                )
-                        );
+    @Override
+    public String managerDecision(Long complaintId, String decision, String remarks) {
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
         Task task = taskService.createTaskQuery()
-                .processVariableValueEquals(
-                        "complaintId",
-                        complaintId
-                )
+                .processVariableValueEquals("complaintId", complaintId)
                 .taskDefinitionKey("managerTask")
                 .singleResult();
 
@@ -47,29 +39,19 @@ public class ManagerServiceImpl implements ManagerService {
             return "Manager task not found";
         }
 
-        taskService.complete(
-                task.getId(),
-                java.util.Map.of(
-                        "managerDecision",
-                        decision
-                )
-        );
+        taskService.complete(task.getId(), Map.of("managerDecision", decision));
 
-        String previousStatus =
-                complaint.getStatus();
+        String previousStatus = complaint.getStatus();
 
         if ("RESOLVE".equalsIgnoreCase(decision)) {
-
             complaint.setStatus("RESOLVED");
-
         } else if ("REJECT".equalsIgnoreCase(decision)) {
-
             complaint.setStatus("REJECTED");
-
         } else if ("RETRY".equalsIgnoreCase(decision)) {
-
             complaint.setStatus("RETRY_VENDOR");
         }
+
+        complaint.addWorkHistory("Manager Decision", "Decision: " + decision, remarks);
 
         complaintRepository.save(complaint);
 
@@ -80,11 +62,8 @@ public class ManagerServiceImpl implements ManagerService {
                 "MANAGER",
                 previousStatus,
                 complaint.getStatus(),
-                "Manager decision completed",
-                java.util.Map.of(
-                        "decision",
-                        decision
-                )
+                "Manager decision completed: " + decision,
+                Map.of("decision", decision, "remarks", remarks != null ? remarks : "")
         );
 
         return "Manager decision updated";

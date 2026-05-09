@@ -27,7 +27,7 @@ public interface ComplaintService {
 
     Complaint rejectComplaint(Long complaintId);
 
-    String managerDecision(Long complaintId, String decision);
+    String managerDecision(Long complaintId, String decision, String remarks);
 
     Complaint reassignVendor(Long complaintId, Long vendorId);
 

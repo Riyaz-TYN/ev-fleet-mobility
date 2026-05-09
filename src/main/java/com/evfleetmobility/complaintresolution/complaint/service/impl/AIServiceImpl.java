@@ -35,9 +35,11 @@ public class AIServiceImpl implements AIService, JavaDelegate {
     @Autowired
     private ServiceHistoryRepository serviceHistoryRepository;
 
+    @Autowired
+    private com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository complaintRepository;
+
     @Override
     public void execute(DelegateExecution execution) {
-
         System.out.println("AI Service running...");
 
         Long complaintId = (Long) execution.getVariable("complaintId");
@@ -67,6 +69,13 @@ public class AIServiceImpl implements AIService, JavaDelegate {
         execution.setVariable("aiSuggestion", suggestion);
         execution.setVariable("aiConfidence", confidence);
         execution.setVariable("predictedCategory", predictedCategory);
+
+        if (aiAttemptCount >= 3) {
+            complaintRepository.findById(complaintId).ifPresent(complaint -> {
+                complaint.setEscalationReason("AI support limit reached");
+                complaintRepository.save(complaint);
+            });
+        }
 
         System.out.println("AI Attempt Count: " + aiAttemptCount);
         System.out.println("AI Suggestion: " + suggestion);

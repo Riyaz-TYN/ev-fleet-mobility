@@ -140,7 +140,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{}"
+          "raw": "{}",
           "options": {
             "raw": {
               "language": "json"
@@ -413,6 +413,32 @@
           }
         },
         "description": "Fetch complaints assigned to a manager or vendor admin."
+      }
+    },
+    {
+      "name": "Vendor: Performance Stats",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/complaints/vendor/stats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "complaints",
+            "vendor",
+            "stats"
+          ]
+        },
+        "description": "Get performance metrics for the logged-in vendor."
       }
     },
     {
@@ -793,7 +819,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"taskId\": \"task-123\",\n  \"resolved\": false,\n  \"continueAi\": true,\n  \"userFollowUp\": \"I tried restarting, but smoke is still there.\"\n}",
+          "raw": "{\n  \"complaintId\": 1001,\n  \"resolved\": false,\n  \"continueAi\": false\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -833,7 +859,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"taskId\": \"task-201\",\n  \"vendorResolved\": true\n}",
+          "raw": "{\n  \"complaintId\": 1001,\n  \"vendorResolved\": true\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -873,7 +899,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"taskId\": \"task-301\",\n  \"managerDecision\": \"RETRY\"\n}",
+          "raw": "{\n  \"complaintId\": 1001,\n  \"managerDecision\": \"RETRY\",\n  \"remarks\": \"Assigning specialist team for battery overhaul.\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -881,6 +907,44 @@
           }
         },
         "description": "Manager approves or rejects a manager-level workflow task."
+      }
+    },
+    {
+      "name": "Vendor: Get Performance Stats",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/organizationStats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "organizationStats"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"vendorId\": 7\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": "Get real-time performance metrics for a vendor organization using a request body."
       }
     },
     {

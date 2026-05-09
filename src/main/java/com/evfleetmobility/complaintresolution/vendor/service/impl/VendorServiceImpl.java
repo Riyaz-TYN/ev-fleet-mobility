@@ -197,8 +197,9 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         );
 
         complaint.setVendorId(selectedVendor.getId());
-
         complaint.setStatus("ASSIGNED_TO_VENDOR");
+
+        complaint.addWorkHistory("Vendor Assigned", selectedVendor.getCompanyName() + " (ID: " + selectedVendor.getId() + ")", null);
 
         complaintRepository.save(complaint);
 
@@ -379,6 +380,14 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         String assignedVendor =
                 complaint.getAssignedTeam();
 
+        // --- Smart Appending Logic ---
+        complaint.addWorkHistory(
+            "Vendor Review", 
+            "Status: " + (Boolean.TRUE.equals(resolved) ? "RESOLVED" : "UNRESOLVED"), 
+            remarks
+        );
+        // -----------------------------
+
         if (Boolean.TRUE.equals(resolved)) {
 
             complaint.setStatus("RESOLVED");
@@ -388,6 +397,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
             complaint.setStatus(
                     "ESCALATED_TO_MANAGER"
             );
+            complaint.setEscalationReason("Vendor could not resolve: " + (remarks != null ? remarks : "No remarks provided"));
         }
 
         complaint.setAssignedTeam(

@@ -90,6 +90,8 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
         complaint.setVendorId(vendor.getId());
         complaint.setEscalationReason(null);
 
+        complaint.addWorkHistory("Vendor Assigned", vendor.getCompanyName() + " (ID: " + vendorId + ")", null);
+
         Complaint savedComplaint = complaintRepository.save(complaint);
 
         // Complete manager task if it exists
@@ -122,6 +124,9 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
         complaint.setStatus("REJECTED");
         complaint.setAssignedTeam(null);
         complaint.setVendorId(null);
+        
+        complaint.addWorkHistory("Complaint Rejected", "Decision by Manager", null);
+        
         return complaintRepository.save(complaint);
     }
 
@@ -183,6 +188,8 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
         complaint.setAssignedTeam(vendor.getCompanyName());
         complaint.setStatus("ASSIGNED_TO_VENDOR");
         complaint.setEscalationReason(null);
+
+        complaint.addWorkHistory("Vendor Reassigned", vendor.getCompanyName() + " (ID: " + vendorId + ")", null);
 
         Complaint savedComplaint = complaintRepository.save(complaint);
 

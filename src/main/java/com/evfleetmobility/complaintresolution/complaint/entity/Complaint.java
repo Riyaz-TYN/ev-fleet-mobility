@@ -10,8 +10,6 @@ public class Complaint {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
-
     private String status;
 
     private String issueCategory;
@@ -40,6 +38,9 @@ public class Complaint {
     @Column(name = "escalation_reason", columnDefinition = "TEXT")
     private String escalationReason;
 
+    @Column(name = "work_summary", columnDefinition = "TEXT")
+    private String workSummary;
+
     public Complaint() {
         this.status = "OPEN";
         this.createdAt = LocalDateTime.now();
@@ -48,7 +49,6 @@ public class Complaint {
     public Long getId() {
         return id;
     }
-
 
     public String getStatus() {
         return status;
@@ -140,5 +140,41 @@ public class Complaint {
 
     public void setVehicleId(String vehicleId) {
         this.vehicleId = vehicleId;
+    }
+
+    public String getWorkSummary() {
+        return workSummary;
+    }
+
+    public void setWorkSummary(String workSummary) {
+        this.workSummary = workSummary;
+    }
+
+    public void addWorkHistory(String action, String actorInfo, String remarks) {
+        String time = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("hh:mm a", java.util.Locale.ENGLISH));
+        
+        StringBuilder entry = new StringBuilder();
+        entry.append(time).append(" — ").append(action).append("\n");
+        
+        if (actorInfo != null && !actorInfo.isBlank()) {
+            entry.append(actorInfo).append("\n");
+        }
+        
+        if (remarks != null && !remarks.isBlank()) {
+            entry.append("Remarks: \"").append(remarks).append("\"\n");
+        }
+        
+        // Prevent exact duplicate consecutive entries (e.g., double assignment logs)
+        String newEntry = entry.toString();
+        if (this.workSummary != null && this.workSummary.endsWith(newEntry)) {
+            return; 
+        }
+
+        if (this.workSummary == null || this.workSummary.isBlank()) {
+            this.workSummary = newEntry;
+        } else {
+            this.workSummary = this.workSummary + "\n" + newEntry;
+        }
     }
 }
