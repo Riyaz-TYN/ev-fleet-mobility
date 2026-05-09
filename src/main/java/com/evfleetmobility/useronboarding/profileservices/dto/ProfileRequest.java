@@ -25,7 +25,6 @@ public class ProfileRequest {
     private String gstin;
 
     // Vendor-specific (admin-managed)
-    private Double vendorRating;
     private Boolean vendorAvailability;
     private String expertise;
 
