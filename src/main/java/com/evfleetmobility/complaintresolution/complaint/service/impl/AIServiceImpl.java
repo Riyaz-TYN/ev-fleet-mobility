@@ -96,6 +96,11 @@ public class AIServiceImpl implements AIService, JavaDelegate {
                 )
         );
 
+        complaintRepository.findById(complaintId).ifPresent(complaint -> {
+            complaint.addWorkHistory("AI Suggestion", "AI Assistant", suggestion);
+            complaintRepository.save(complaint);
+        });
+
         if (aiAttemptCount >= 3) {
             auditLogService.saveLog(
                     complaintId,
@@ -160,6 +165,9 @@ public class AIServiceImpl implements AIService, JavaDelegate {
         if (aiAttemptCount > 1) {
             String userFollowUp = (String) execution.getVariable("userFollowUp");
             request.setUserFollowUp(userFollowUp);
+
+            String previousSuggestion = (String) execution.getVariable("aiSuggestion");
+            request.setPreviousSuggestion(previousSuggestion);
         }
 
 

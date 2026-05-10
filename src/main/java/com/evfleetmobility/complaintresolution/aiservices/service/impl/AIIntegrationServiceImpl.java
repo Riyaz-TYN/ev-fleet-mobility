@@ -27,7 +27,7 @@ public class AIIntegrationServiceImpl implements AIIntegrationService {
     private final AIQueryRepository queryRepository;
     private final AIResponseRepository responseRepository;
 
-    @Value("${ai.service.timeout:60}")
+    @Value("${ai.service.timeout:5}")
     private int timeoutSeconds;
 
     @Override

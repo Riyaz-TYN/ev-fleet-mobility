@@ -20,6 +20,7 @@ public class AIRequestDTO {
 
     private Integer aiAttemptCount;
     private String userFollowUp;
+    private String previousSuggestion;
 
     private Long userId;
 
@@ -63,6 +64,9 @@ public class AIRequestDTO {
 
     public String getUserFollowUp() { return userFollowUp; }
     public void setUserFollowUp(String userFollowUp) { this.userFollowUp = userFollowUp; }
+
+    public String getPreviousSuggestion() { return previousSuggestion; }
+    public void setPreviousSuggestion(String previousSuggestion) { this.previousSuggestion = previousSuggestion; }
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
