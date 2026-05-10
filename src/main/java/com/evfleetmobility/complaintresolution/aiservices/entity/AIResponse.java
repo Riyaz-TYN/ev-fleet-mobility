@@ -23,7 +23,7 @@ public class AIResponse {
     @Column(name = "issue_id")
     private String issueId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String answer;
 
     private Double confidence;
@@ -31,6 +31,7 @@ public class AIResponse {
     @Column(length = 50)
     private String status;
 
+    @Column(columnDefinition = "TEXT")
     private String title;
 
     @Column(columnDefinition = "TEXT")
@@ -44,36 +45,91 @@ public class AIResponse {
         this.createdAt = LocalDateTime.now();
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Long getQueryId() { return queryId; }
-    public void setQueryId(Long queryId) { this.queryId = queryId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public Long getQueryId() {
+        return queryId;
+    }
 
-    public String getVehicleId() { return vehicleId; }
-    public void setVehicleId(String vehicleId) { this.vehicleId = vehicleId; }
+    public void setQueryId(Long queryId) {
+        this.queryId = queryId;
+    }
 
-    public String getIssueId() { return issueId; }
-    public void setIssueId(String issueId) { this.issueId = issueId; }
+    public Long getUserId() {
+        return userId;
+    }
 
-    public String getAnswer() { return answer; }
-    public void setAnswer(String answer) { this.answer = answer; }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
-    public Double getConfidence() { return confidence; }
-    public void setConfidence(Double confidence) { this.confidence = confidence; }
+    public String getVehicleId() {
+        return vehicleId;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setVehicleId(String vehicleId) {
+        this.vehicleId = vehicleId;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public String getIssueId() {
+        return issueId;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public void setIssueId(String issueId) {
+        this.issueId = issueId;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getAnswer() {
+        return answer;
+    }
+
+    public void setAnswer(String answer) {
+        this.answer = answer;
+    }
+
+    public Double getConfidence() {
+        return confidence;
+    }
+
+    public void setConfidence(Double confidence) {
+        this.confidence = confidence;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

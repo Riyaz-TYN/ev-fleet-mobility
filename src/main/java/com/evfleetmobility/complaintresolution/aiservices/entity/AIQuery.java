@@ -20,7 +20,7 @@ public class AIQuery {
     @Column(name = "vehicle_model")
     private String vehicleModel;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String question;
 
     @Column(name = "created_at")
