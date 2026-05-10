@@ -49,14 +49,11 @@ public class ProfileServiceImpl implements ProfileService {
             if (request.getLongitude() != null) ind.setLongitude(request.getLongitude());
 
 
-            final IndividualDetails finalInd = ind;
             if (request.getCompanyName() != null && !request.getCompanyName().isBlank()) {
-                finalInd.setCompanyName(request.getCompanyName());
+                ind.setCompanyName(request.getCompanyName());
+                ind.setCompanyApprovalStatus(ApprovalStatus.PENDING);
                 organizationRepo.findByCompanyNameIgnoreCase(request.getCompanyName())
-                        .ifPresent(org -> {
-                            finalInd.setOrganizationDetails(org);
-                            finalInd.setCompanyApprovalStatus(ApprovalStatus.PENDING);
-                        });
+                        .ifPresent(ind::setOrganizationDetails);
             }
 
             if (request.getPanCardFile() != null && !request.getPanCardFile().isEmpty()) {
@@ -135,13 +132,14 @@ public class ProfileServiceImpl implements ProfileService {
                     .longitude(ind.getLongitude());
 
                 if (ind.getOrganizationDetails() != null) {
-                    builder.companyName(ind.getOrganizationDetails().getCompanyName())
-                           .companyApprovalStatus(
-                               ind.getCompanyApprovalStatus() != null ? ind.getCompanyApprovalStatus().name() : "PENDING"
-                           );
+                    builder.companyName(ind.getOrganizationDetails().getCompanyName());
                 } else {
                     builder.companyName(ind.getCompanyName());
                 }
+                
+                builder.companyApprovalStatus(
+                    ind.getCompanyApprovalStatus() != null ? ind.getCompanyApprovalStatus().name() : "PENDING"
+                );
             }
         } else if (user.getUserType() == UserType.ORGANIZATION) {
             OrganizationDetails org = user.getOrganizationDetails();

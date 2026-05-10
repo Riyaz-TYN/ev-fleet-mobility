@@ -32,6 +32,9 @@ public class Complaint {
     @Column(name = "vendor_id")
     private Long vendorId;
 
+    @Column(name = "technician_id")
+    private Long technicianId;
+
     private Double latitude;
     private Double longitude;
 
@@ -88,6 +91,14 @@ public class Complaint {
 
     public void setVendorId(Long vendorId) {
         this.vendorId = vendorId;
+    }
+
+    public Long getTechnicianId() {
+        return technicianId;
+    }
+
+    public void setTechnicianId(Long technicianId) {
+        this.technicianId = technicianId;
     }
 
     public Double getLatitude() {
