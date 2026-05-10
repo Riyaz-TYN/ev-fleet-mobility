@@ -137,6 +137,19 @@ public class ComplaintController {
         );
     }
 
+    @PutMapping("/assign-technician")
+    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER')")
+    public ResponseEntity<String> assignTechnician(
+            @RequestBody com.evfleetmobility.complaintresolution.complaint.dto.TechnicianAssignRequestDTO request
+    ) {
+        return ResponseEntity.ok(
+                complaintService.assignTechnician(
+                        request.getComplaintId(),
+                        request.getTechnicianId()
+                )
+        );
+    }
+
     @PutMapping("/assign")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<?> approveAndAssign(
@@ -171,6 +184,17 @@ public class ComplaintController {
                         request.getManagerDecision()
                 )
         );
+    }
+
+    @PostMapping("/{id}/respond")
+    @PreAuthorize("hasRole('DRIVER')")
+    public ResponseEntity<String> handleAiResponse(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Boolean> request
+    ) {
+        boolean resolved = request.getOrDefault("resolved", false);
+        boolean continueAi = request.getOrDefault("continueAi", false);
+        return ResponseEntity.ok(complaintService.handleAiResponse(id, resolved, continueAi));
     }
 
     @GetMapping("/vendors")

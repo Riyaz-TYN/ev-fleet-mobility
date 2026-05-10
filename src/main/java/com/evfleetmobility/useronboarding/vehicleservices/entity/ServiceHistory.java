@@ -26,8 +26,8 @@ public class ServiceHistory {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private BigDecimal totalCost;
-    private String providerName;
+    private BigDecimal cost;
+    private String serviceCenter;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -60,11 +60,11 @@ public class ServiceHistory {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public BigDecimal getTotalCost() { return totalCost; }
-    public void setTotalCost(BigDecimal totalCost) { this.totalCost = totalCost; }
+    public BigDecimal getCost() { return cost; }
+    public void setCost(BigDecimal cost) { this.cost = cost; }
 
-    public String getProviderName() { return providerName; }
-    public void setProviderName(String providerName) { this.providerName = providerName; }
+    public String getServiceCenter() { return serviceCenter; }
+    public void setServiceCenter(String serviceCenter) { this.serviceCenter = serviceCenter; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

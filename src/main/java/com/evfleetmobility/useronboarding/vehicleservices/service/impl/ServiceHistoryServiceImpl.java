@@ -35,8 +35,8 @@ public class ServiceHistoryServiceImpl implements ServiceHistoryService {
         serviceHistory.setOdometerReading(request.getOdometerReading());
         serviceHistory.setServiceType(request.getServiceType());
         serviceHistory.setDescription(request.getDescription());
-        serviceHistory.setTotalCost(request.getTotalCost());
-        serviceHistory.setProviderName(request.getProviderName());
+        serviceHistory.setCost(request.getCost());
+        serviceHistory.setServiceCenter(request.getServiceCenter());
 
         return mapToResponse(serviceHistoryRepository.save(serviceHistory));
     }
@@ -56,8 +56,8 @@ public class ServiceHistoryServiceImpl implements ServiceHistoryService {
         if (request.getOdometerReading() != null) serviceHistory.setOdometerReading(request.getOdometerReading());
         if (request.getServiceType() != null) serviceHistory.setServiceType(request.getServiceType());
         if (request.getDescription() != null) serviceHistory.setDescription(request.getDescription());
-        if (request.getTotalCost() != null) serviceHistory.setTotalCost(request.getTotalCost());
-        if (request.getProviderName() != null) serviceHistory.setProviderName(request.getProviderName());
+        if (request.getCost() != null) serviceHistory.setCost(request.getCost());
+        if (request.getServiceCenter() != null) serviceHistory.setServiceCenter(request.getServiceCenter());
 
         return mapToResponse(serviceHistoryRepository.save(serviceHistory));
     }
@@ -86,7 +86,7 @@ public class ServiceHistoryServiceImpl implements ServiceHistoryService {
             throw new VehicleNotFoundException("Vehicle not found with ID: " + vehicleId);
         }
         return serviceHistoryRepository.findByVehicleId(vehicleId).stream()
-                .map(ServiceHistory::getTotalCost)
+                .map(ServiceHistory::getCost)
                 .filter(cost -> cost != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -113,8 +113,8 @@ public class ServiceHistoryServiceImpl implements ServiceHistoryService {
         response.setOdometerReading(entity.getOdometerReading());
         response.setServiceType(entity.getServiceType());
         response.setDescription(entity.getDescription());
-        response.setTotalCost(entity.getTotalCost());
-        response.setProviderName(entity.getProviderName());
+        response.setCost(entity.getCost());
+        response.setServiceCenter(entity.getServiceCenter());
         response.setCreatedAt(entity.getCreatedAt());
         response.setUpdatedAt(entity.getUpdatedAt());
         return response;

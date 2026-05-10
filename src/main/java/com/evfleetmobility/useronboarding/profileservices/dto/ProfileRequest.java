@@ -9,7 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProfileRequest {
 
     private String fullName;
-    private String personalEmail;
     private String phoneNumber;
     private String countryCode;
     private String gender;

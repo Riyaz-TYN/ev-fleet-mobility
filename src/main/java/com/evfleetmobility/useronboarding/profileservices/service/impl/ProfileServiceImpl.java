@@ -40,7 +40,6 @@ public class ProfileServiceImpl implements ProfileService {
             }
 
             if (request.getFullName() != null) ind.setFullName(request.getFullName().trim());
-            if (request.getPersonalEmail() != null) ind.setPersonalEmail(request.getPersonalEmail().trim());
             if (request.getPhoneNumber() != null) ind.setPhoneNumber(request.getPhoneNumber().trim());
             if (request.getCountryCode() != null) ind.setCountryCode(request.getCountryCode().trim());
             if (request.getAddressLine1() != null) ind.setAddressLine1(request.getAddressLine1().trim());
@@ -126,7 +125,6 @@ public class ProfileServiceImpl implements ProfileService {
             if (ind != null) {
                 builder
                     .fullName(ind.getFullName())
-                    .personalEmail(ind.getPersonalEmail())
                     .gender(ind.getGender())
                     .phoneNumber(ind.getPhoneNumber())
                     .countryCode(ind.getCountryCode())
@@ -149,7 +147,7 @@ public class ProfileServiceImpl implements ProfileService {
             OrganizationDetails org = user.getOrganizationDetails();
             if (org != null) {
                 builder
-                    .fullName(user.getUsername())
+                    .fullName(user.getFullName())
                     .companyName(org.getCompanyName())
                     .companyEmail(org.getEmail())
                     .gstin(org.getGstin())

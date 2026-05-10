@@ -23,6 +23,12 @@ public class Complaint {
     @Column(columnDefinition = "TEXT")
     private String data;
 
+    @Column(name = "technician_id")
+    private Long technicianId;
+
+    @Column(name = "technician_name")
+    private String technicianName;
+
     private LocalDateTime createdAt;
 
     @Column(name = "customer_id")
@@ -30,6 +36,11 @@ public class Complaint {
 
     @Column(name = "vehicle_id")
     private String vehicleId;
+
+    @Column(columnDefinition = "TEXT")
+    private String aiSuggestion;
+
+    private Double aiConfidence;
 
     public Complaint() {
         this.status = "OPEN";
@@ -92,6 +103,22 @@ public class Complaint {
         return createdAt;
     }
 
+    public Long getTechnicianId() {
+        return technicianId;
+    }
+
+    public void setTechnicianId(Long technicianId) {
+        this.technicianId = technicianId;
+    }
+
+    public String getTechnicianName() {
+        return technicianName;
+    }
+
+    public void setTechnicianName(String technicianName) {
+        this.technicianName = technicianName;
+    }
+
     public String getCustomerId() {
         return customerId;
     }
@@ -106,5 +133,21 @@ public class Complaint {
 
     public void setVehicleId(String vehicleId) {
         this.vehicleId = vehicleId;
+    }
+
+    public String getAiSuggestion() {
+        return aiSuggestion;
+    }
+
+    public void setAiSuggestion(String aiSuggestion) {
+        this.aiSuggestion = aiSuggestion;
+    }
+
+    public Double getAiConfidence() {
+        return aiConfidence;
+    }
+
+    public void setAiConfidence(Double aiConfidence) {
+        this.aiConfidence = aiConfidence;
     }
 }

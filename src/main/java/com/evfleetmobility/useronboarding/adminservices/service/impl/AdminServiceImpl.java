@@ -41,14 +41,38 @@ public class AdminServiceImpl implements AdminService {
         if ("SUPER_ADMIN".equalsIgnoreCase(caller.getRole())) {
             List<User> users = status != null ? userRepository.findByApprovalStatus(status) : userRepository.findAll();
             return users.stream().map(this::mapToUserDetailsResponse).collect(Collectors.toList());
-        } else if ("ADMIN".equalsIgnoreCase(caller.getRole())) {
+        } else if ("ADMIN".equalsIgnoreCase(caller.getRole()) || "VENDOR_ADMIN".equalsIgnoreCase(caller.getRole())) {
+            String callerCompany = (caller.getOrganizationDetails() != null) ? caller.getOrganizationDetails().getCompanyName() : 
+                                   (caller.getIndividualDetails() != null && caller.getIndividualDetails().getOrganizationDetails() != null) ? 
+                                   caller.getIndividualDetails().getOrganizationDetails().getCompanyName() : null;
+
+            if (callerCompany == null) throw new AccessDeniedException("User not linked to organization");
+            final String finalCompany = callerCompany;
+
             List<User> users = status != null ? userRepository.findByApprovalStatus(status) : userRepository.findAll();
             return users.stream()
-                    .filter(u -> !"SUPER_ADMIN".equalsIgnoreCase(u.getRole()) && !"ADMIN".equalsIgnoreCase(u.getRole()))
+                    .filter(u -> {
+                        if ("SUPER_ADMIN".equalsIgnoreCase(u.getRole())) return false;
+                        
+                        // 1. Show all Vendor Organizations to platform ADMIN
+                        if ("ADMIN".equalsIgnoreCase(caller.getRole()) && u.getUserType() == UserType.ORGANIZATION) {
+                            return true; 
+                        }
+                        
+                        // 2. Filter Individuals by company
+                        if (u.getUserType() == UserType.INDIVIDUAL && u.getIndividualDetails() != null && u.getIndividualDetails().getOrganizationDetails() != null) {
+                            return finalCompany.equalsIgnoreCase(u.getIndividualDetails().getOrganizationDetails().getCompanyName());
+                        }
+                        
+                        // 3. For Vendor Admin, show only their own organization
+                        if ("VENDOR_ADMIN".equalsIgnoreCase(caller.getRole()) && u.getUserType() == UserType.ORGANIZATION && u.getOrganizationDetails() != null) {
+                            return finalCompany.equalsIgnoreCase(u.getOrganizationDetails().getCompanyName());
+                        }
+
+                        return false;
+                    })
                     .map(this::mapToUserDetailsResponse)
                     .collect(Collectors.toList());
-        } else if ("VENDOR_ADMIN".equalsIgnoreCase(caller.getRole())) {
-            return getIndividualsByRoleAndStatus(callerId, status);
         }
         throw new AccessDeniedException("You do not have permission to list users");
     }
@@ -65,11 +89,30 @@ public class AdminServiceImpl implements AdminService {
                     : userRepository.findByUserType(UserType.INDIVIDUAL);
             return inds.stream().map(this::mapToUserDetailsResponse).collect(Collectors.toList());
         } else if ("ADMIN".equalsIgnoreCase(caller.getRole())) {
+            String callerCompany = null;
+            if (caller.getOrganizationDetails() != null) {
+                callerCompany = caller.getOrganizationDetails().getCompanyName();
+            } else if (caller.getIndividualDetails() != null && caller.getIndividualDetails().getOrganizationDetails() != null) {
+                callerCompany = caller.getIndividualDetails().getOrganizationDetails().getCompanyName();
+            }
+
+            if (callerCompany == null) {
+                throw new AccessDeniedException("User is not linked to any organization");
+            }
+
+            final String finalCompany = callerCompany;
             List<User> inds = status != null
                     ? userRepository.findByUserTypeAndApprovalStatus(UserType.INDIVIDUAL, status)
                     : userRepository.findByUserType(UserType.INDIVIDUAL);
+            
             return inds.stream()
-                    .filter(u -> !"SUPER_ADMIN".equalsIgnoreCase(u.getRole()) && !"ADMIN".equalsIgnoreCase(u.getRole()))
+                    .filter(u -> {
+                        if ("SUPER_ADMIN".equalsIgnoreCase(u.getRole()) || "ADMIN".equalsIgnoreCase(u.getRole())) {
+                            return false;
+                        }
+                        return u.getIndividualDetails() != null && u.getIndividualDetails().getOrganizationDetails() != null &&
+                                finalCompany.equalsIgnoreCase(u.getIndividualDetails().getOrganizationDetails().getCompanyName());
+                    })
                     .map(this::mapToUserDetailsResponse)
                     .collect(Collectors.toList());
         } else if ("VENDOR_ADMIN".equalsIgnoreCase(caller.getRole())) {
@@ -100,12 +143,14 @@ public class AdminServiceImpl implements AdminService {
         if ("SUPER_ADMIN".equalsIgnoreCase(caller.getRole())) {
             return orgs.stream().map(this::mapToCompanyDetailsResponse).collect(Collectors.toList());
         } else if ("ADMIN".equalsIgnoreCase(caller.getRole())) {
+            // Platform Admin sees ALL vendor organizations for management/approval
             return orgs.stream()
                     .filter(org -> {
                         User orgUser = userRepository.findByUserType(UserType.ORGANIZATION).stream()
                                 .filter(u -> u.getOrganizationDetails() != null && u.getOrganizationDetails().getId().equals(org.getId()))
                                 .findFirst().orElse(null);
-                        return orgUser != null && "VENDOR_ADMIN".equalsIgnoreCase(orgUser.getRole());
+                        // Show if it's a vendor admin or the admin's own org
+                        return orgUser != null && ("VENDOR_ADMIN".equalsIgnoreCase(orgUser.getRole()) || "ADMIN".equalsIgnoreCase(orgUser.getRole()));
                     })
                     .map(this::mapToCompanyDetailsResponse)
                     .collect(Collectors.toList());
@@ -217,6 +262,7 @@ public class AdminServiceImpl implements AdminService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .userType(user.getUserType())
+                .fullName(user.getFullName())
                 .approvalStatus(user.getApprovalStatus());
 
         if (user.getUserType() == UserType.INDIVIDUAL && user.getIndividualDetails() != null) {

@@ -10,6 +10,8 @@ import com.evfleetmobility.useronboarding.vehicleservices.entity.ServiceHistory;
 import com.evfleetmobility.useronboarding.vehicleservices.entity.Vehicle;
 import com.evfleetmobility.useronboarding.vehicleservices.repository.ServiceHistoryRepository;
 import com.evfleetmobility.useronboarding.vehicleservices.repository.VehicleRepository;
+import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
+import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
@@ -34,6 +36,9 @@ public class AIServiceImpl implements AIService, JavaDelegate {
 
     @Autowired
     private ServiceHistoryRepository serviceHistoryRepository;
+
+    @Autowired
+    private ComplaintRepository complaintRepository;
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -67,6 +72,14 @@ public class AIServiceImpl implements AIService, JavaDelegate {
         execution.setVariable("aiSuggestion", suggestion);
         execution.setVariable("aiConfidence", confidence);
         execution.setVariable("predictedCategory", predictedCategory);
+
+        // Update Complaint entity with AI suggestion
+        complaintRepository.findById(complaintId).ifPresent(complaint -> {
+            complaint.setAiSuggestion(suggestion);
+            complaint.setAiConfidence(confidence);
+            complaint.setIssueCategory(predictedCategory);
+            complaintRepository.save(complaint);
+        });
 
         System.out.println("AI Attempt Count: " + aiAttemptCount);
         System.out.println("AI Suggestion: " + suggestion);
@@ -185,7 +198,7 @@ public class AIServiceImpl implements AIService, JavaDelegate {
                         sh.getServiceDate() != null ? sh.getServiceDate().toString() : null,
                         sh.getServiceType() != null ? sh.getServiceType().name() : null,
                         sh.getDescription(),
-                        sh.getProviderName()
+                        sh.getServiceCenter()
                 );
                 historyDTOs.add(dto);
             }

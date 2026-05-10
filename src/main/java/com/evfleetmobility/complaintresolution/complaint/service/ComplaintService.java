@@ -28,6 +28,8 @@ public interface ComplaintService {
     Complaint rejectComplaint(Long complaintId);
 
     String managerDecision(Long complaintId, String decision);
+    String assignTechnician(Long complaintId, Long technicianId);
+    String handleAiResponse(Long complaintId, boolean resolved, boolean continueAi);
 
     List<OrganizationDetails> getAvailableVendors();
     OrganizationDetails getVendorById(Long vendorId);

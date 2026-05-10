@@ -33,7 +33,6 @@ public class IndividualDetails {
     @JoinColumn(name = "organization_id", nullable = true)
     private OrganizationDetails organizationDetails;
 
-    private String personalEmail;
     private String countryCode;
     private String addressLine1;
     private String addressLine2;
@@ -75,9 +74,6 @@ public class IndividualDetails {
 
     public OrganizationDetails getOrganizationDetails() { return organizationDetails; }
     public void setOrganizationDetails(OrganizationDetails organizationDetails) { this.organizationDetails = organizationDetails; }
-
-    public String getPersonalEmail() { return personalEmail; }
-    public void setPersonalEmail(String personalEmail) { this.personalEmail = personalEmail; }
 
     public String getCountryCode() { return countryCode; }
     public void setCountryCode(String countryCode) { this.countryCode = countryCode; }
