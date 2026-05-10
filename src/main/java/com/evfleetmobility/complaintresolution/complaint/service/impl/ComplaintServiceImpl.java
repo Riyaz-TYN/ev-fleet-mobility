@@ -324,4 +324,17 @@ public class ComplaintServiceImpl implements ComplaintService {
     public List<com.evfleetmobility.complaintresolution.vendor.dto.VendorDTO> getNearbyVendors(Long complaintId) {
         return managerDashboardService.getNearbyVendorsForComplaint(complaintId);
     }
+
+    @Override
+    public Complaint assignTechnician(Long complaintId, Long technicianId) {
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+
+        userRepository.findById(technicianId).ifPresent(tech -> {
+            complaint.setTechnicianId(technicianId);
+            complaint.addWorkHistory("Technician Assigned", tech.getFullName() + " (ID: " + technicianId + ")", null);
+        });
+
+        return complaintRepository.save(complaint);
+    }
 }

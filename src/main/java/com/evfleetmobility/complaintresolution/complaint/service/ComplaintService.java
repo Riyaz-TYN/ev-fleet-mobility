@@ -42,5 +42,7 @@ public interface ComplaintService {
     Complaint getComplaintById(Long id);
     List<Complaint> getComplaintsByStatus(String status);
     List<Complaint> getComplaintsByPriority(String priority);
+
+    Complaint assignTechnician(Long complaintId, Long technicianId);
 }
 

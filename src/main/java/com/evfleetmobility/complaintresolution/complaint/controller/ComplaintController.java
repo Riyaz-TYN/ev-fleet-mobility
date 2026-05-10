@@ -12,6 +12,7 @@ import com.evfleetmobility.complaintresolution.manager.dto.ManagerDecisionReques
 import com.evfleetmobility.complaintresolution.vendor.dto.VendorIdRequestDTO;
 import com.evfleetmobility.complaintresolution.vendor.dto.VendorResolveRequestDTO;
 import com.evfleetmobility.complaintresolution.vendor.dto.VendorStatusUpdateDTO;
+import com.evfleetmobility.complaintresolution.complaint.dto.TechnicianAssignRequestDTO;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -170,5 +171,15 @@ public class ComplaintController {
         public ResponseEntity<?> reassignVendor(@RequestBody VendorIdRequestDTO request) {
                 return ResponseEntity
                                 .ok(complaintService.reassignVendor(request.getComplaintId(), request.getVendorId()));
+        }
+
+        @PutMapping("/assign-technician")
+        @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> assignTechnician(
+                        @RequestBody TechnicianAssignRequestDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.assignTechnician(
+                                                request.getComplaintId(),
+                                                request.getTechnicianId()));
         }
 }
