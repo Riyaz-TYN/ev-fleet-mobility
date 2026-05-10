@@ -18,8 +18,6 @@ import com.evfleetmobility.useronboarding.authservices.entity.ApprovalStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.camunda.bpm.engine.RuntimeService;
-import org.camunda.bpm.engine.TaskService;
-import org.camunda.bpm.engine.task.Task;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -48,8 +46,6 @@ public class ComplaintServiceImpl implements ComplaintService {
     @Autowired
     private RuntimeService runtimeService;
 
-    @Autowired
-    private TaskService taskService;
 
     @Autowired
     private AuthContextService authContextService;

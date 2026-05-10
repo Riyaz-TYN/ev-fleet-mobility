@@ -2,58 +2,49 @@ package com.evfleetmobility.complaintresolution.aiservices.service.impl;
 
 import com.evfleetmobility.complaintresolution.aiservices.dto.AIRequestDTO;
 import com.evfleetmobility.complaintresolution.aiservices.dto.AIResponseDTO;
+import com.evfleetmobility.complaintresolution.aiservices.entity.AIQuery;
+import com.evfleetmobility.complaintresolution.aiservices.entity.AIResponse;
+import com.evfleetmobility.complaintresolution.aiservices.repository.AIQueryRepository;
+import com.evfleetmobility.complaintresolution.aiservices.repository.AIResponseRepository;
 import com.evfleetmobility.complaintresolution.aiservices.service.AIIntegrationService;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
 
 @Service
+@RequiredArgsConstructor
 public class AIIntegrationServiceImpl implements AIIntegrationService {
 
+    @Qualifier("aiWebClient")
     private final WebClient aiWebClient;
-    private final int timeoutSeconds;
 
-    public AIIntegrationServiceImpl(
-            @Qualifier("aiWebClient") WebClient aiWebClient,
-            @Value("${ai.service.timeout:30}") int timeoutSeconds
-    ) {
-        this.aiWebClient = aiWebClient;
-        this.timeoutSeconds = timeoutSeconds;
-    }
+    private final AIQueryRepository queryRepository;
+    private final AIResponseRepository responseRepository;
+
+    @Value("${ai.service.timeout:60}")
+    private int timeoutSeconds;
 
     @Override
+    @Transactional
     public AIResponseDTO callAI(AIRequestDTO request) {
+        // 1. Create and save AIQuery
+        AIQuery query = new AIQuery();
+        query.setUserId(request.getUserId());
+        query.setVehicleId(request.getVehicleId());
+        query.setVehicleModel(request.getVehicleModel());
+        query.setQuestion(request.getUserFollowUp() != null ? request.getUserFollowUp() : request.getDescription());
+        query = queryRepository.save(query);
+
+        AIResponseDTO responseDTO;
         try {
-            System.out.println("Calling external AI service for complaint: " + request.getComplaintId()
-                    + " | attempt: " + request.getAiAttemptCount());
-
-            System.out.println("===== AI PAYLOAD =====");
-
-            System.out.println("Complaint ID: " + request.getComplaintId());
-            System.out.println("Title: " + request.getTitle());
-            System.out.println("Description: " + request.getDescription());
-            System.out.println("Issue Type: " + request.getIssueType());
-            System.out.println("Priority: " + request.getPriority());
-
-            System.out.println("Vehicle ID: " + request.getVehicleId());
-            System.out.println("Vehicle Model: " + request.getVehicleModel());
-            System.out.println("Vehicle Make: " + request.getVehicleMake());
-
-            System.out.println("Year: " + request.getYearOfManufacture());
-            System.out.println("Battery Capacity: " + request.getBatteryCapacityKwh());
-
-            System.out.println("AI Attempt Count: " + request.getAiAttemptCount());
-
-            System.out.println("User ID: " + request.getUserId());
-
-            System.out.println("Service History: " + request.getServiceHistory());
-
-            AIResponseDTO response = aiWebClient
+            // 2. Call AI Service
+            responseDTO = aiWebClient
                     .post()
                     .uri("/api/ai/analyze")
                     .bodyValue(request)
@@ -62,23 +53,30 @@ public class AIIntegrationServiceImpl implements AIIntegrationService {
                     .timeout(Duration.ofSeconds(timeoutSeconds))
                     .block();
 
-            if (response != null) {
-                System.out.println("AI response received â€” suggestion: " + response.getSuggestion()
-                        + " | confidence: " + response.getConfidence());
-                return response;
+            if (responseDTO == null) {
+                responseDTO = buildFallbackResponse(request);
             }
 
-            System.out.println("AI service returned null response, using fallback");
-            return buildFallbackResponse(request);
-
         } catch (WebClientResponseException e) {
-            System.out.println("AI service HTTP error: " + e.getStatusCode() + " â€” " + e.getMessage());
-            return buildFallbackResponse(request);
-
+            responseDTO = buildFallbackResponse(request);
         } catch (Exception e) {
-            System.out.println("AI service call failed: " + e.getMessage());
-            return buildFallbackResponse(request);
+            responseDTO = buildFallbackResponse(request);
         }
+
+        // 3. Create and save AIResponse
+        AIResponse aiResponse = new AIResponse();
+        aiResponse.setQueryId(query.getId());
+        aiResponse.setUserId(request.getUserId());
+        aiResponse.setVehicleId(request.getVehicleId());
+        aiResponse.setIssueId(String.valueOf(request.getComplaintId()));
+        aiResponse.setTitle(request.getTitle());
+        aiResponse.setDescription(request.getDescription());
+        aiResponse.setAnswer(responseDTO.getSuggestion());
+        aiResponse.setConfidence(responseDTO.getConfidence());
+        aiResponse.setStatus(responseDTO.getStatus() != null ? responseDTO.getStatus() : "PROCESSED");
+        responseRepository.save(aiResponse);
+
+        return responseDTO;
     }
 
     private AIResponseDTO buildFallbackResponse(AIRequestDTO request) {

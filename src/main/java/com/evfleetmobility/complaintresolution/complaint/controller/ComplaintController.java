@@ -8,10 +8,8 @@ import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintRequestDTO
 import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintStatusRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.dto.VehicleComplaintRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.service.ComplaintService;
-import com.evfleetmobility.complaintresolution.manager.dto.ManagerApproveRequestDTO;
 import com.evfleetmobility.complaintresolution.manager.dto.ManagerDecisionRequestDTO;
 import com.evfleetmobility.complaintresolution.vendor.dto.VendorIdRequestDTO;
-import com.evfleetmobility.complaintresolution.vendor.dto.VendorNameRequestDTO;
 import com.evfleetmobility.complaintresolution.vendor.dto.VendorResolveRequestDTO;
 import com.evfleetmobility.complaintresolution.vendor.dto.VendorStatusUpdateDTO;
 

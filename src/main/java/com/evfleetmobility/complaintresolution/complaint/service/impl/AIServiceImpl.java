@@ -7,7 +7,6 @@ import com.evfleetmobility.complaintresolution.aiservices.service.AIIntegrationS
 import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 import com.evfleetmobility.complaintresolution.complaint.service.AIService;
 import com.evfleetmobility.useronboarding.vehicleservices.entity.ServiceHistory;
-import com.evfleetmobility.useronboarding.vehicleservices.entity.Vehicle;
 import com.evfleetmobility.useronboarding.vehicleservices.repository.ServiceHistoryRepository;
 import com.evfleetmobility.useronboarding.vehicleservices.repository.VehicleRepository;
 
@@ -40,7 +39,7 @@ public class AIServiceImpl implements AIService, JavaDelegate {
 
     @Override
     public void execute(DelegateExecution execution) {
-        System.out.println("AI Service running...");
+        // AI Service running...
 
         Long complaintId = (Long) execution.getVariable("complaintId");
         String vehicleId = (String) execution.getVariable("vehicleId");
@@ -77,8 +76,7 @@ public class AIServiceImpl implements AIService, JavaDelegate {
             });
         }
 
-        System.out.println("AI Attempt Count: " + aiAttemptCount);
-        System.out.println("AI Suggestion: " + suggestion);
+        // AI Attempt and Suggestion tracked in Audit Log below
 
         auditLogService.saveLog(
                 complaintId,
@@ -156,9 +154,7 @@ public class AIServiceImpl implements AIService, JavaDelegate {
         if (customerId != null) {
             try {
                 request.setUserId(Long.parseLong(customerId));
-            } catch (NumberFormatException e) {
-                System.out.println("Could not parse customerId to Long: " + customerId);
-            }
+            } catch (NumberFormatException ignored) {}
         }
 
         if (aiAttemptCount > 1) {
@@ -202,7 +198,6 @@ public class AIServiceImpl implements AIService, JavaDelegate {
             request.setServiceHistory(historyDTOs);
 
         } catch (NumberFormatException e) {
-            System.out.println("vehicleId is not numeric, skipping vehicle context: " + vehicleId);
             request.setServiceHistory(new ArrayList<>());
         }
     }

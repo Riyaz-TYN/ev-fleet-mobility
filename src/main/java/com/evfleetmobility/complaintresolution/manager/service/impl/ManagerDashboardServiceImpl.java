@@ -101,7 +101,15 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
                 .singleResult();
 
         if (task != null) {
-            taskService.complete(task.getId(), Map.of("managerDecision", "RETRY"));
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("managerDecision", "RETRY");
+            variables.put("vendorId", vendor.getId());
+            variables.put("vendorName", vendor.getCompanyName());
+            variables.put("vendorLocation", vendor.getAddressLine1());
+            variables.put("vendorRating", vendor.getVendorRating());
+            variables.put("vendorExpertise", vendor.getExpertise());
+            variables.put("skipAutoAssignment", true);
+            taskService.complete(task.getId(), variables);
         }
 
         auditLogService.saveLog(
@@ -199,7 +207,15 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
                 .singleResult();
 
         if (task != null) {
-            taskService.complete(task.getId(), Map.of("managerDecision", "RETRY"));
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("managerDecision", "RETRY");
+            variables.put("vendorId", vendor.getId());
+            variables.put("vendorName", vendor.getCompanyName());
+            variables.put("vendorLocation", vendor.getAddressLine1());
+            variables.put("vendorRating", vendor.getVendorRating());
+            variables.put("vendorExpertise", vendor.getExpertise());
+            variables.put("skipAutoAssignment", true);
+            taskService.complete(task.getId(), variables);
         }
 
         auditLogService.saveLog(

@@ -39,7 +39,14 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
     @Override
     public void execute(DelegateExecution execution) {
 
-        System.out.println(" Vendor assignment started...");
+        // Vendor assignment started
+
+        Boolean skipAuto = (Boolean) execution.getVariable("skipAutoAssignment");
+        if (Boolean.TRUE.equals(skipAuto)) {
+            System.out.println(" Skipping auto-assignment due to manual override.");
+            execution.removeVariable("skipAutoAssignment");
+            return;
+        }
 
         Long complaintId =
                 (Long) execution.getVariable("complaintId");
@@ -62,9 +69,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         if (complaintLatitude == null
                 || complaintLongitude == null) {
 
-            System.out.println(
-                    "âš ï¸  Location missing. Using mock coordinates."
-            );
+            // Location missing
 
             complaintLatitude = 11.0168;
             complaintLongitude = 76.9558;
@@ -83,18 +88,22 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 ? predictedCategory 
                 : issueCategory;
 
-        System.out.println(" Searching for vendors with expertise: " + searchCategory);
+        // Searching for vendors with expertise
+
+        Complaint complaintForCheck = complaintRepository.findById(complaintId).orElse(null);
+        Long previousVendorId = (complaintForCheck != null) ? complaintForCheck.getVendorId() : null;
 
         List<OrganizationDetails> availableVendors =
                 organizationRepo.findByApprovalStatusAndVendorAvailabilityTrue(ApprovalStatus.APPROVED);
 
         List<OrganizationDetails> validVendors = availableVendors.stream()
                 .filter(v -> v.getLatitude() != null && v.getLongitude() != null)
+                .filter(v -> previousVendorId == null || !v.getId().equals(previousVendorId))
                 .toList();
 
         if (validVendors.isEmpty()) {
 
-            System.out.println("âš ï¸  No approved and available vendors found. Escalating to Manager.");
+            // No approved vendors found
 
             Complaint complaint = complaintRepository.findById(complaintId)
                     .orElseThrow(() -> new RuntimeException("Complaint not found"));
@@ -121,7 +130,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         List<OrganizationDetails> selectionPool = expertVendors.isEmpty() ? validVendors : expertVendors;
 
         if (expertVendors.isEmpty()) {
-            System.out.println("âš ï¸  No vendors with matching expertise found. Selecting nearest available.");
+            // No vendors with matching expertise found
         }
 
         OrganizationDetails selectedVendor = selectionPool.stream()
@@ -179,10 +188,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 distanceKm
         );
 
-        System.out.println(
-                "âœ… Assigned Vendor: "
-                        + selectedVendor.getCompanyName()
-        );
+        // Assigned Vendor: ...
 
         Complaint complaint =
                 complaintRepository.findById(complaintId)
