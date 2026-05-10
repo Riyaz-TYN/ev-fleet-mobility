@@ -10,8 +10,6 @@ import com.evfleetmobility.useronboarding.vehicleservices.entity.ServiceHistory;
 import com.evfleetmobility.useronboarding.vehicleservices.entity.Vehicle;
 import com.evfleetmobility.useronboarding.vehicleservices.repository.ServiceHistoryRepository;
 import com.evfleetmobility.useronboarding.vehicleservices.repository.VehicleRepository;
-import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
-import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
@@ -38,11 +36,10 @@ public class AIServiceImpl implements AIService, JavaDelegate {
     private ServiceHistoryRepository serviceHistoryRepository;
 
     @Autowired
-    private ComplaintRepository complaintRepository;
+    private com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository complaintRepository;
 
     @Override
     public void execute(DelegateExecution execution) {
-
         System.out.println("AI Service running...");
 
         Long complaintId = (Long) execution.getVariable("complaintId");
@@ -73,13 +70,12 @@ public class AIServiceImpl implements AIService, JavaDelegate {
         execution.setVariable("aiConfidence", confidence);
         execution.setVariable("predictedCategory", predictedCategory);
 
-        // Update Complaint entity with AI suggestion
-        complaintRepository.findById(complaintId).ifPresent(complaint -> {
-            complaint.setAiSuggestion(suggestion);
-            complaint.setAiConfidence(confidence);
-            complaint.setIssueCategory(predictedCategory);
-            complaintRepository.save(complaint);
-        });
+        if (aiAttemptCount >= 3) {
+            complaintRepository.findById(complaintId).ifPresent(complaint -> {
+                complaint.setEscalationReason("AI support limit reached");
+                complaintRepository.save(complaint);
+            });
+        }
 
         System.out.println("AI Attempt Count: " + aiAttemptCount);
         System.out.println("AI Suggestion: " + suggestion);
@@ -166,9 +162,10 @@ public class AIServiceImpl implements AIService, JavaDelegate {
         }
 
         if (aiAttemptCount > 1) {
-            String previousSuggestion = (String) execution.getVariable("aiSuggestion");
-            request.setPreviousSuggestion(previousSuggestion);
+            String userFollowUp = (String) execution.getVariable("userFollowUp");
+            request.setUserFollowUp(userFollowUp);
         }
+
 
         enrichWithVehicleContext(request, vehicleId);
 
@@ -198,7 +195,7 @@ public class AIServiceImpl implements AIService, JavaDelegate {
                         sh.getServiceDate() != null ? sh.getServiceDate().toString() : null,
                         sh.getServiceType() != null ? sh.getServiceType().name() : null,
                         sh.getDescription(),
-                        sh.getServiceCenter()
+                        sh.getProviderName()
                 );
                 historyDTOs.add(dto);
             }

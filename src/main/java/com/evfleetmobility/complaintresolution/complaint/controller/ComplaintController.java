@@ -23,195 +23,154 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/complaints")
 public class ComplaintController {
 
-    private final ComplaintService complaintService;
-    private final AuthContextService authContextService;
-    private final AuditLogService auditLogService;
+        private final ComplaintService complaintService;
+        private final AuthContextService authContextService;
+        private final AuditLogService auditLogService;
 
-    public ComplaintController(
-            ComplaintService complaintService,
-            AuthContextService authContextService,
-            AuditLogService auditLogService
-    ) {
-        this.complaintService = complaintService;
-        this.authContextService = authContextService;
-        this.auditLogService = auditLogService;
-    }
+        public ComplaintController(
+                        ComplaintService complaintService,
+                        AuthContextService authContextService,
+                        AuditLogService auditLogService) {
+                this.complaintService = complaintService;
+                this.authContextService = authContextService;
+                this.auditLogService = auditLogService;
+        }
 
-    @PostMapping
-    @PreAuthorize("hasRole('DRIVER')")
-    public ResponseEntity<?> saveComplaint(
-            @RequestBody ComplaintRequestDTO request
-    ) {
-        String customerId = authContextService.getCurrentUserId().toString();
+        @PostMapping
+        @PreAuthorize("hasRole('DRIVER')")
+        public ResponseEntity<?> saveComplaint(
+                        @RequestBody ComplaintRequestDTO request) {
+                String customerId = authContextService.getCurrentUserId().toString();
 
-        String result = complaintService.saveComplaint(request, customerId);
+                String result = complaintService.saveComplaint(request, customerId);
 
-        return ResponseEntity.ok(
-                java.util.Map.of(
-                        "message", result,
-                        "payloadSentToAI", request
-                )
-        );
-    }
+                return ResponseEntity.ok(
+                                java.util.Map.of(
+                                                "message", result,
+                                                "payloadSentToAI", request));
+        }
 
-    @GetMapping
-    @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<?> getComplaints() {
-        return ResponseEntity.ok(complaintService.getComplaints());
-    }
+        @GetMapping
+        @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> getComplaints() {
+                return ResponseEntity.ok(complaintService.getComplaints());
+        }
 
-    @PostMapping("/details")
-    @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<?> getComplaintDetails(
-            @RequestBody ComplaintDetailsRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                complaintService.getComplaintDetails(request.getComplaintId())
-        );
-    }
+        @PostMapping("/details")
+        @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> getComplaintDetails(
+                        @RequestBody ComplaintDetailsRequestDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.getComplaintDetails(request.getComplaintId()));
+        }
 
-    @PostMapping("/filter/status")
-    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<?> getComplaintsByStatus(
-            @RequestBody ComplaintStatusRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                complaintService.getComplaintStatus(request.getStatus())
-        );
-    }
+        @PostMapping("/filter/status")
+        @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> getComplaintsByStatus(
+                        @RequestBody ComplaintStatusRequestDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.getComplaintStatus(request.getStatus()));
+        }
 
-    @PostMapping("/filter/vehicle")
-    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<?> getComplaintsByVehicle(
-            @RequestBody VehicleComplaintRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                complaintService.getComplaintsByVehicle(request.getVehicleId())
-        );
-    }
+        @PostMapping("/filter/vehicle")
+        @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> getComplaintsByVehicle(
+                        @RequestBody VehicleComplaintRequestDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.getComplaintsByVehicle(request.getVehicleId()));
+        }
 
-    @PostMapping("/audit-logs")
-    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<?> getAuditLogs(
-            @RequestBody AuditLogRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                auditLogService.getLogsByComplaintId(request.getComplaintId())
-        );
-    }
+        @PostMapping("/audit-logs")
+        @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> getAuditLogs(
+                        @RequestBody AuditLogRequestDTO request) {
+                return ResponseEntity.ok(
+                                auditLogService.getLogsByComplaintId(request.getComplaintId()));
+        }
 
-    @PostMapping("/assigned")
-    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<?> getAssignedComplaints(
-            @RequestBody VendorNameRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                complaintService.getAssignedComplaintsByVendorName(request.getVendorName())
-        );
-    }
+        @PostMapping("/assigned")
+        @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> getAssignedComplaints(
+                        @RequestBody com.evfleetmobility.complaintresolution.vendor.dto.VendorIdRequestDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.getAssignedComplaintsByVendorId(request.getVendorId()));
+        }
 
-    @PutMapping("/status")
-    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER')")
-    public ResponseEntity<String> updateComplaintStatus(
-            @RequestBody VendorStatusUpdateDTO request
-    ) {
-        return ResponseEntity.ok(
-                complaintService.updateComplaintStatus(
-                        request.getComplaintId(),
-                        request.getStatus()
-                )
-        );
-    }
+        @PutMapping("/status")
+        @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER')")
+        public ResponseEntity<String> updateComplaintStatus(
+                        @RequestBody VendorStatusUpdateDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.updateComplaintStatus(
+                                                request.getComplaintId(),
+                                                request.getStatus()));
+        }
 
-    @PutMapping("/resolve")
-    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER')")
-    public ResponseEntity<String> resolveComplaint(
-            @RequestBody VendorResolveRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                complaintService.resolveComplaint(
-                        request.getComplaintId(),
-                        request.getResolved(),
-                        request.getResolutionRemarks()
-                )
-        );
-    }
+        @PutMapping("/resolve")
+        @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER')")
+        public ResponseEntity<String> resolveComplaint(
+                        @RequestBody VendorResolveRequestDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.resolveComplaint(
+                                                request.getComplaintId(),
+                                                request.getResolved(),
+                                                request.getResolutionRemarks()));
+        }
 
-    @PutMapping("/assign-technician")
-    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER')")
-    public ResponseEntity<String> assignTechnician(
-            @RequestBody com.evfleetmobility.complaintresolution.complaint.dto.TechnicianAssignRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                complaintService.assignTechnician(
-                        request.getComplaintId(),
-                        request.getTechnicianId()
-                )
-        );
-    }
+        @PutMapping("/assign")
+        @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> approveAndAssign(
+                        @RequestBody com.evfleetmobility.complaintresolution.manager.dto.ManagerApproveRequestDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.approveAndAssignComplaint(
+                                                request.getComplaintId(),
+                                                request.getVendorId()));
+        }
 
-    @PutMapping("/assign")
-    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<?> approveAndAssign(
-            @RequestBody ManagerApproveRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                complaintService.approveAndAssignComplaint(
-                        request.getComplaintId(),
-                        request.getTeamName()
-                )
-        );
-    }
+        @PutMapping("/reject")
+        @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> rejectComplaint(
+                        @RequestBody ComplaintDetailsRequestDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.rejectComplaint(request.getComplaintId()));
+        }
 
-    @PutMapping("/reject")
-    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<?> rejectComplaint(
-            @RequestBody ComplaintDetailsRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                complaintService.rejectComplaint(request.getComplaintId())
-        );
-    }
+        @PutMapping("/decision")
+        @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<String> managerDecision(
+                        @RequestBody ManagerDecisionRequestDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.managerDecision(
+                                                request.getComplaintId(),
+                                                request.getManagerDecision(),
+                                                request.getRemarks()));
+        }
 
-    @PutMapping("/decision")
-    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<String> managerDecision(
-            @RequestBody ManagerDecisionRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                complaintService.managerDecision(
-                        request.getComplaintId(),
-                        request.getManagerDecision()
-                )
-        );
-    }
+        @GetMapping("/vendors")
+        @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> getAvailableVendors() {
+                return ResponseEntity.ok(
+                                complaintService.getAvailableVendors());
+        }
 
-    @PostMapping("/{id}/respond")
-    @PreAuthorize("hasRole('DRIVER')")
-    public ResponseEntity<String> handleAiResponse(
-            @PathVariable Long id,
-            @RequestBody java.util.Map<String, Boolean> request
-    ) {
-        boolean resolved = request.getOrDefault("resolved", false);
-        boolean continueAi = request.getOrDefault("continueAi", false);
-        return ResponseEntity.ok(complaintService.handleAiResponse(id, resolved, continueAi));
-    }
+        @PostMapping("/vendors/details")
+        @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> getVendorDetails(
+                        @RequestBody VendorIdRequestDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.getVendorById(request.getVendorId()));
+        }
 
-    @GetMapping("/vendors")
-    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<?> getAvailableVendors() {
-        return ResponseEntity.ok(
-                complaintService.getAvailableVendors()
-        );
-    }
+        @PostMapping("/{complaintId}/nearby-vendors")
+        @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> getNearbyVendors(@PathVariable Long complaintId) {
+                return ResponseEntity.ok(complaintService.getNearbyVendors(complaintId));
+        }
 
-    @PostMapping("/vendors/details")
-    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<?> getVendorDetails(
-            @RequestBody VendorIdRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                complaintService.getVendorById(request.getVendorId())
-        );
-    }
+        @PutMapping("/reassign")
+        @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> reassignVendor(@RequestBody VendorIdRequestDTO request) {
+                return ResponseEntity
+                                .ok(complaintService.reassignVendor(request.getComplaintId(), request.getVendorId()));
+        }
 }

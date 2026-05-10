@@ -17,19 +17,21 @@ public interface ComplaintService {
     List<Complaint> getComplaintsByVehicle(String vehicleId);
     List<Complaint> getComplaintStatus(String status);
 
-    List<Complaint> getAssignedComplaintsByVendorName(String vendorName);
+    List<Complaint> getAssignedComplaintsByVendorId(Long vendorId);
 
     String updateComplaintStatus(Long complaintId, String status);
 
     String resolveComplaint(Long complaintId, Boolean resolved, String remarks);
 
-    Complaint approveAndAssignComplaint(Long complaintId, String teamName);
+    Complaint approveAndAssignComplaint(Long complaintId, Long vendorId);
 
     Complaint rejectComplaint(Long complaintId);
 
-    String managerDecision(Long complaintId, String decision);
-    String assignTechnician(Long complaintId, Long technicianId);
-    String handleAiResponse(Long complaintId, boolean resolved, boolean continueAi);
+    String managerDecision(Long complaintId, String decision, String remarks);
+
+    Complaint reassignVendor(Long complaintId, Long vendorId);
+
+    List<com.evfleetmobility.complaintresolution.vendor.dto.VendorDTO> getNearbyVendors(Long complaintId);
 
     List<OrganizationDetails> getAvailableVendors();
     OrganizationDetails getVendorById(Long vendorId);
@@ -41,3 +43,4 @@ public interface ComplaintService {
     List<Complaint> getComplaintsByStatus(String status);
     List<Complaint> getComplaintsByPriority(String priority);
 }
+

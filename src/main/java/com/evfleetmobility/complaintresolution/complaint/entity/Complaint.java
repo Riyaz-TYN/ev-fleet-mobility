@@ -10,8 +10,6 @@ public class Complaint {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String domain;
-
     private String status;
 
     private String issueCategory;
@@ -23,13 +21,7 @@ public class Complaint {
     @Column(columnDefinition = "TEXT")
     private String data;
 
-    @Column(name = "technician_id")
-    private Long technicianId;
-
-    @Column(name = "technician_name")
-    private String technicianName;
-
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
 
     @Column(name = "customer_id")
     private String customerId;
@@ -37,10 +29,17 @@ public class Complaint {
     @Column(name = "vehicle_id")
     private String vehicleId;
 
-    @Column(columnDefinition = "TEXT")
-    private String aiSuggestion;
+    @Column(name = "vendor_id")
+    private Long vendorId;
 
-    private Double aiConfidence;
+    private Double latitude;
+    private Double longitude;
+
+    @Column(name = "escalation_reason", columnDefinition = "TEXT")
+    private String escalationReason;
+
+    @Column(name = "work_summary", columnDefinition = "TEXT")
+    private String workSummary;
 
     public Complaint() {
         this.status = "OPEN";
@@ -49,14 +48,6 @@ public class Complaint {
 
     public Long getId() {
         return id;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
     }
 
     public String getStatus() {
@@ -91,6 +82,38 @@ public class Complaint {
         this.assignedTeam = assignedTeam;
     }
 
+    public Long getVendorId() {
+        return vendorId;
+    }
+
+    public void setVendorId(Long vendorId) {
+        this.vendorId = vendorId;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getEscalationReason() {
+        return escalationReason;
+    }
+
+    public void setEscalationReason(String escalationReason) {
+        this.escalationReason = escalationReason;
+    }
+
     public String getData() {
         return data;
     }
@@ -101,22 +124,6 @@ public class Complaint {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    public Long getTechnicianId() {
-        return technicianId;
-    }
-
-    public void setTechnicianId(Long technicianId) {
-        this.technicianId = technicianId;
-    }
-
-    public String getTechnicianName() {
-        return technicianName;
-    }
-
-    public void setTechnicianName(String technicianName) {
-        this.technicianName = technicianName;
     }
 
     public String getCustomerId() {
@@ -135,19 +142,39 @@ public class Complaint {
         this.vehicleId = vehicleId;
     }
 
-    public String getAiSuggestion() {
-        return aiSuggestion;
+    public String getWorkSummary() {
+        return workSummary;
     }
 
-    public void setAiSuggestion(String aiSuggestion) {
-        this.aiSuggestion = aiSuggestion;
+    public void setWorkSummary(String workSummary) {
+        this.workSummary = workSummary;
     }
 
-    public Double getAiConfidence() {
-        return aiConfidence;
-    }
+    public void addWorkHistory(String action, String actorInfo, String remarks) {
+        String time = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("hh:mm a", java.util.Locale.ENGLISH));
+        
+        StringBuilder entry = new StringBuilder();
+        entry.append(time).append(" — ").append(action).append("\n");
+        
+        if (actorInfo != null && !actorInfo.isBlank()) {
+            entry.append(actorInfo).append("\n");
+        }
+        
+        if (remarks != null && !remarks.isBlank()) {
+            entry.append("Remarks: \"").append(remarks).append("\"\n");
+        }
+        
+        // Prevent exact duplicate consecutive entries (e.g., double assignment logs)
+        String newEntry = entry.toString();
+        if (this.workSummary != null && this.workSummary.endsWith(newEntry)) {
+            return; 
+        }
 
-    public void setAiConfidence(Double aiConfidence) {
-        this.aiConfidence = aiConfidence;
+        if (this.workSummary == null || this.workSummary.isBlank()) {
+            this.workSummary = newEntry;
+        } else {
+            this.workSummary = this.workSummary + "\n" + newEntry;
+        }
     }
 }

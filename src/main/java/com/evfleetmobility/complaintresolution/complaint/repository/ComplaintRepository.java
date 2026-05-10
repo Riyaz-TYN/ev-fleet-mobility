@@ -29,6 +29,8 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             String assignedTeam
     );
 
+    List<Complaint> findByVendorIdOrderByCreatedAtDesc(Long vendorId);
+
     List<Complaint> findByCustomerId(String customerId);
 
     List<Complaint> findByVehicleId(String vehicleId);

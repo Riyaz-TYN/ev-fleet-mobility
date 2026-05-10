@@ -14,6 +14,7 @@ import com.evfleetmobility.useronboarding.profileservices.repository.Organizatio
 import com.evfleetmobility.useronboarding.vehicleservices.repository.VehicleRepository;
 import com.evfleetmobility.useronboarding.authservices.repository.UserRepository;
 import com.evfleetmobility.useronboarding.authservices.entity.UserType;
+import com.evfleetmobility.useronboarding.authservices.entity.ApprovalStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.camunda.bpm.engine.RuntimeService;
@@ -22,7 +23,6 @@ import org.camunda.bpm.engine.task.Task;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,10 +34,14 @@ public class ComplaintServiceImpl implements ComplaintService {
     private final ComplaintRepository complaintRepository;
     private final ObjectMapper objectMapper;
     private final AuditLogService auditLogService;
+
     private final VendorService vendorService;
+
     private final OrganizationRepository organizationRepo;
+
     private final ManagerService managerService;
     private final ManagerDashboardService managerDashboardService;
+
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
 
@@ -73,7 +77,6 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    @Transactional
     public String saveComplaint(ComplaintRequestDTO request, String callerUserIdStr) {
         try {
             if (request.getComplaintData() == null) {
@@ -81,9 +84,18 @@ public class ComplaintServiceImpl implements ComplaintService {
             }
 
             Map<String, Object> data = request.getComplaintData();
-            String issueCategory = data.get("issueCategory") != null ? data.get("issueCategory").toString() : "UNKNOWN";
-            String issueDescription = data.get("issueDescription") != null ? data.get("issueDescription").toString() : "";
-            String location = data.get("location") != null ? data.get("location").toString() : "UNKNOWN";
+
+            String issueCategory = data.get("issueCategory") != null
+                    ? data.get("issueCategory").toString()
+                    : "UNKNOWN";
+
+            String issueDescription = data.get("issueDescription") != null
+                    ? data.get("issueDescription").toString()
+                    : "";
+
+            String location = data.get("location") != null
+                    ? data.get("location").toString()
+                    : "UNKNOWN";
 
             Long userId = Long.parseLong(callerUserIdStr);
 
@@ -101,21 +113,44 @@ public class ComplaintServiceImpl implements ComplaintService {
                 });
             }
 
-            var vehicle = vehicleRepository.findByUserId(userId)
-                    .orElseThrow(() -> new RuntimeException("No vehicle found for this user"));
+            var vehicle = vehicleRepository
+                    .findByUserId(userId)
+                    .orElseThrow(() ->
+                            new RuntimeException("No vehicle found for this user")
+                    );
 
             String vehicleId = vehicle.getId().toString();
+
             String jsonData = objectMapper.writeValueAsString(data);
 
             Complaint complaint = new Complaint();
             complaint.setIssueCategory(issueCategory);
             complaint.setData(jsonData);
-            complaint.setCustomerId(callerUserIdStr);
+            complaint.setCustomerId(callerUserIdStr);  
             complaint.setVehicleId(vehicleId);
+            complaint.setLatitude(request.getLatitude());
+            complaint.setLongitude(request.getLongitude());
+            
+            complaint.addWorkHistory("Complaint Raised", "Driver (ID: " + callerUserIdStr + ")", issueDescription);
 
             Complaint savedComplaint = complaintRepository.save(complaint);
 
-            auditLogService.saveLog(savedComplaint.getId(), vehicleId, "CREATED", "USER", null, "OPEN", "Complaint created by user", Map.of("userId", callerUserIdStr, "issueCategory", issueCategory, "issueDescription", issueDescription, "location", location, "vehicleId", vehicleId));
+            auditLogService.saveLog(
+                    savedComplaint.getId(),
+                    vehicleId,
+                    "CREATED",
+                    "USER",
+                    null,
+                    "OPEN",
+                    "Complaint created by user",
+                    Map.of(
+                            "userId", callerUserIdStr,
+                            "issueCategory", issueCategory,
+                            "issueDescription", issueDescription,
+                            "location", location,
+                            "vehicleId", vehicleId
+                    )
+            );
 
             Map<String, Object> variables = new HashMap<>();
             variables.put("complaintId", savedComplaint.getId());
@@ -132,15 +167,34 @@ public class ComplaintServiceImpl implements ComplaintService {
             variables.put("status", "IN_PROGRESS");
             variables.put("priority", "LOW");
 
-            if (request.getLatitude() != null) variables.put("complaintLatitude", request.getLatitude());
-            if (request.getLongitude() != null) variables.put("complaintLongitude", request.getLongitude());
+            if (request.getLatitude() != null) {
+                variables.put("complaintLatitude", request.getLatitude());
+            }
+            if (request.getLongitude() != null) {
+                variables.put("complaintLongitude", request.getLongitude());
+            }
 
             runtimeService.startProcessInstanceByKey("complaintWorkflow", variables);
 
-            auditLogService.saveLog(savedComplaint.getId(), vehicleId, "WORKFLOW_STARTED", "SYSTEM", "OPEN", "IN_PROGRESS", "Camunda complaint workflow started", Map.of("processKey", "complaintWorkflow", "priority", "LOW", "vehicleId", vehicleId));
+            auditLogService.saveLog(
+                    savedComplaint.getId(),
+                    vehicleId,
+                    "WORKFLOW_STARTED",
+                    "SYSTEM",
+                    "OPEN",
+                    "IN_PROGRESS",
+                    "Camunda complaint workflow started",
+                    Map.of(
+                            "processKey", "complaintWorkflow",
+                            "priority", "LOW",
+                            "vehicleId", vehicleId
+                    )
+            );
 
             return "Complaint saved & workflow started";
+
         } catch (Exception e) {
+            e.printStackTrace();
             return "Error: " + e.getMessage();
         }
     }
@@ -148,29 +202,33 @@ public class ComplaintServiceImpl implements ComplaintService {
     @Override
     public List<Complaint> getComplaints() {
         String role = authContextService.getCurrentRole();
+
         Long currentUserId = authContextService.getCurrentUserId();
 
         if ("DRIVER".equalsIgnoreCase(role)) {
+
             return complaintRepository.findByCustomerIdOrderByCreatedAtDesc(String.valueOf(currentUserId));
         }
-        if ("VENDOR_ADMIN".equalsIgnoreCase(role)) {
+
+        if ("VENDOR_ADMIN".equalsIgnoreCase(role) || "VENDOR".equalsIgnoreCase(role)) {
             return userRepository.findById(currentUserId)
-                    .filter(u -> u.getOrganizationDetails() != null && u.getOrganizationDetails().getCompanyName() != null)
-                    .map(u -> complaintRepository.findByAssignedTeamOrderByCreatedAtDesc(u.getOrganizationDetails().getCompanyName()))
-                    .orElse(List.of());
+                    .filter(u -> u.getOrganizationDetails() != null)
+                    .map(u -> complaintRepository.findByVendorIdOrderByCreatedAtDesc(
+                            u.getOrganizationDetails().getId()))
+                    .orElse(java.util.List.of());
         }
-        if ("TECHNICIAN".equalsIgnoreCase(role)) {
-            return complaintRepository.findByTechnicianIdOrderByCreatedAtDesc(currentUserId);
-        }
+
         if ("MANAGER".equalsIgnoreCase(role)) {
             return complaintRepository.findByStatusOrderByCreatedAtDesc("ESCALATED_TO_MANAGER");
         }
+
         return complaintRepository.findAll();
     }
 
     @Override
     public Complaint getComplaintDetails(Long complaintId) {
-        return complaintRepository.findById(complaintId).orElseThrow(() -> new RuntimeException("Complaint not found"));
+        return complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new RuntimeException("Complaint not found with ID: " + complaintId));
     }
 
     @Override
@@ -184,8 +242,8 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public List<Complaint> getAssignedComplaintsByVendorName(String vendorName) {
-        return vendorService.getAssignedComplaints(vendorName);
+    public List<Complaint> getAssignedComplaintsByVendorId(Long vendorId) {
+        return vendorService.getAssignedComplaints(vendorId);
     }
 
     @Override
@@ -199,8 +257,15 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public Complaint approveAndAssignComplaint(Long complaintId, String teamName) {
-        return managerDashboardService.approveAndAssignComplaint(complaintId, teamName);
+    public Complaint approveAndAssignComplaint(Long complaintId, Long vendorId) {
+        Complaint complaint = managerDashboardService.approveAndAssignComplaint(complaintId, vendorId);
+        
+        OrganizationDetails vendor = organizationRepo.findById(vendorId)
+                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+        
+        complaint.addWorkHistory("Vendor Assigned", vendor.getCompanyName() + " (ID: " + vendorId + ")", null);
+        
+        return complaintRepository.save(complaint);
     }
 
     @Override
@@ -209,18 +274,19 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public String managerDecision(Long complaintId, String decision) {
-        return managerService.managerDecision(complaintId, decision);
+    public String managerDecision(Long complaintId, String decision, String remarks) {
+        return managerService.managerDecision(complaintId, decision, remarks);
     }
 
     @Override
     public List<OrganizationDetails> getAvailableVendors() {
-        return organizationRepo.findByVendorAvailabilityTrue();
+        return organizationRepo.findByApprovalStatusAndVendorAvailabilityTrue(ApprovalStatus.APPROVED);
     }
 
     @Override
     public OrganizationDetails getVendorById(Long vendorId) {
-        return organizationRepo.findById(vendorId).orElseThrow(() -> new RuntimeException("Vendor not found"));
+        return organizationRepo.findById(vendorId)
+                .orElseThrow(() -> new RuntimeException("Vendor not found with ID: " + vendorId));
     }
 
     @Override
@@ -254,61 +320,12 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    @Transactional
-    public String assignTechnician(Long complaintId, Long technicianId) {
-        Complaint complaint = complaintRepository.findById(complaintId)
-                .orElseThrow(() -> new RuntimeException("Complaint not found"));
-
-        Long currentUserId = authContextService.getCurrentUserId();
-        String role = authContextService.getCurrentRole();
-
-        if ("VENDOR_ADMIN".equalsIgnoreCase(role)) {
-            var vendorOrg = userRepository.findById(currentUserId)
-                    .map(u -> u.getOrganizationDetails())
-                    .orElseThrow(() -> new RuntimeException("Vendor organization not found"));
-
-            if (!vendorOrg.getCompanyName().equalsIgnoreCase(complaint.getAssignedTeam())) {
-                throw new RuntimeException("You are not authorized to assign technicians for this vendor's complaints");
-            }
-        }
-
-        var technician = userRepository.findById(technicianId)
-                .orElseThrow(() -> new RuntimeException("Technician not found"));
-
-        complaint.setTechnicianId(technicianId);
-        complaint.setTechnicianName(technician.getFullName());
-        complaint.setStatus("TECHNICIAN_ASSIGNED");
-        complaintRepository.save(complaint);
-
-        auditLogService.saveLog(complaintId, complaint.getVehicleId(), "TECHNICIAN_ASSIGNED", "VENDOR", "ASSIGNED_TO_VENDOR", "TECHNICIAN_ASSIGNED", "Vendor assigned technician: " + technician.getFullName(), Map.of("technicianId", technicianId, "technicianName", technician.getFullName()));
-
-        return "Technician assigned successfully";
+    public Complaint reassignVendor(Long complaintId, Long vendorId) {
+        return managerDashboardService.reassignVendor(complaintId, vendorId);
     }
 
     @Override
-    @Transactional
-    public String handleAiResponse(Long complaintId, boolean resolved, boolean continueAi) {
-        Task task = taskService.createTaskQuery()
-                .processVariableValueEquals("complaintId", complaintId)
-                .taskDefinitionKey("userTask")
-                .singleResult();
-
-        if (task == null) {
-            return "No active AI review task found for this complaint.";
-        }
-
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("resolved", resolved);
-        variables.put("continueAi", continueAi);
-
-        taskService.complete(task.getId(), variables);
-
-        if (resolved) {
-            return "Complaint resolved by user.";
-        } else if (continueAi) {
-            return "Continuing with AI analysis.";
-        } else {
-            return "Escalating to technician/vendor.";
-        }
+    public List<com.evfleetmobility.complaintresolution.vendor.dto.VendorDTO> getNearbyVendors(Long complaintId) {
+        return managerDashboardService.getNearbyVendorsForComplaint(complaintId);
     }
 }
