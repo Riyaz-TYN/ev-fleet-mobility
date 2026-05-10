@@ -11,7 +11,7 @@ public class ServiceHistoryRequest {
     private ServiceType serviceType;
     private String description;
     private BigDecimal cost;
-    private String serviceCenter;
+    private String providerName;
 
     public Long getVehicleId() { return vehicleId; }
     public void setVehicleId(Long vehicleId) { this.vehicleId = vehicleId; }
@@ -25,6 +25,6 @@ public class ServiceHistoryRequest {
     public void setDescription(String description) { this.description = description; }
     public BigDecimal getCost() { return cost; }
     public void setCost(BigDecimal cost) { this.cost = cost; }
-    public String getServiceCenter() { return serviceCenter; }
-    public void setServiceCenter(String serviceCenter) { this.serviceCenter = serviceCenter; }
+    public String getProviderName() { return providerName; }
+    public void setProviderName(String providerName) { this.providerName = providerName; }
 }

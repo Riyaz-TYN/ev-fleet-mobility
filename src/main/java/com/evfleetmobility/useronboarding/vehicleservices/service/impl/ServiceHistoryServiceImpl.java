@@ -36,7 +36,7 @@ public class ServiceHistoryServiceImpl implements ServiceHistoryService {
         serviceHistory.setServiceType(request.getServiceType());
         serviceHistory.setDescription(request.getDescription());
         serviceHistory.setCost(request.getCost());
-        serviceHistory.setServiceCenter(request.getServiceCenter());
+        serviceHistory.setProviderName(request.getProviderName());
 
         return mapToResponse(serviceHistoryRepository.save(serviceHistory));
     }
@@ -57,7 +57,7 @@ public class ServiceHistoryServiceImpl implements ServiceHistoryService {
         if (request.getServiceType() != null) serviceHistory.setServiceType(request.getServiceType());
         if (request.getDescription() != null) serviceHistory.setDescription(request.getDescription());
         if (request.getCost() != null) serviceHistory.setCost(request.getCost());
-        if (request.getServiceCenter() != null) serviceHistory.setServiceCenter(request.getServiceCenter());
+        if (request.getProviderName() != null) serviceHistory.setProviderName(request.getProviderName());
 
         return mapToResponse(serviceHistoryRepository.save(serviceHistory));
     }
@@ -114,7 +114,7 @@ public class ServiceHistoryServiceImpl implements ServiceHistoryService {
         response.setServiceType(entity.getServiceType());
         response.setDescription(entity.getDescription());
         response.setCost(entity.getCost());
-        response.setServiceCenter(entity.getServiceCenter());
+        response.setProviderName(entity.getProviderName());
         response.setCreatedAt(entity.getCreatedAt());
         response.setUpdatedAt(entity.getUpdatedAt());
         return response;

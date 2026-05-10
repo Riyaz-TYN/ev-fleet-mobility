@@ -13,7 +13,7 @@ public class ServiceHistoryResponse {
     private ServiceType serviceType;
     private String description;
     private BigDecimal cost;
-    private String serviceCenter;
+    private String providerName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -31,8 +31,8 @@ public class ServiceHistoryResponse {
     public void setDescription(String description) { this.description = description; }
     public BigDecimal getCost() { return cost; }
     public void setCost(BigDecimal cost) { this.cost = cost; }
-    public String getServiceCenter() { return serviceCenter; }
-    public void setServiceCenter(String serviceCenter) { this.serviceCenter = serviceCenter; }
+    public String getProviderName() { return providerName; }
+    public void setProviderName(String providerName) { this.providerName = providerName; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
