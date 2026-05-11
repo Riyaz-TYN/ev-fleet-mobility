@@ -330,6 +330,36 @@ public class ComplaintServiceImpl implements ComplaintService {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
+        String role = authContextService.getCurrentRole();
+        Long callerId = authContextService.getCurrentUserId();
+
+        if ("VENDOR_ADMIN".equalsIgnoreCase(role)) {
+            com.evfleetmobility.useronboarding.authservices.entity.User vendorUser = userRepository.findById(callerId)
+                    .orElseThrow(() -> new RuntimeException("Vendor user not found"));
+
+            if (vendorUser.getOrganizationDetails() == null) {
+                throw new RuntimeException("Vendor admin is not linked to an organization");
+            }
+
+            Long vendorOrgId = vendorUser.getOrganizationDetails().getId();
+
+            if (!vendorOrgId.equals(complaint.getVendorId())) {
+                throw new RuntimeException("You cannot assign a technician to a complaint not assigned to your organization");
+            }
+
+            com.evfleetmobility.useronboarding.authservices.entity.User techUser = userRepository.findById(technicianId)
+                    .orElseThrow(() -> new RuntimeException("Technician not found"));
+
+            if (techUser.getIndividualDetails() == null || techUser.getIndividualDetails().getOrganizationDetails() == null ||
+                !techUser.getIndividualDetails().getOrganizationDetails().getId().equals(vendorOrgId)) {
+                throw new RuntimeException("Technician does not belong to your organization");
+            }
+
+            if (techUser.getApprovalStatus() != ApprovalStatus.APPROVED) {
+                throw new RuntimeException("Technician is not yet approved by the organization");
+            }
+        }
+
         userRepository.findById(technicianId).ifPresent(tech -> {
             complaint.setTechnicianId(technicianId);
             complaint.addWorkHistory("Technician Assigned", tech.getFullName() + " (ID: " + technicianId + ")", null);
