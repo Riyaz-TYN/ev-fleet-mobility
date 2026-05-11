@@ -74,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
         // 1. First, handle Organization mapping (needed for both types)
         OrganizationDetails org = null;
         if (request.getCompanyName() != null && !request.getCompanyName().isEmpty()) {
-            org = organizationRepo.findByCompanyName(request.getCompanyName())
+            org = organizationRepo.findByCompanyNameIgnoreCase(request.getCompanyName())
                     .orElseGet(() -> {
                         OrganizationDetails newOrg = new OrganizationDetails();
                         newOrg.setCompanyName(request.getCompanyName());

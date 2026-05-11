@@ -209,7 +209,9 @@ public class AdminServiceImpl implements AdminService {
         }
 
         ind.setCompanyApprovalStatus(status);
+        targetUser.setApprovalStatus(status);
         individualRepo.save(ind);
+        userRepository.save(targetUser);
     }
 
     @Override
