@@ -129,8 +129,7 @@ Categorizes the type of identity/compliance document uploaded by the user to AWS
 |---|---|
 | `PAN` | Permanent Account Number card (individual tax ID). |
 | `GSTIN` | Goods and Services Tax Identification Number (organization). |
-| `AADHAR` | National identity document for individuals. |
-| `OTHER` | Any other supporting document. |
+
 
 ---
 
@@ -214,82 +213,4 @@ When a manager acts on an escalated complaint, the `managerDecision` variable ro
 | `RESOLVE` | `RESOLVED` | Manager directly closes the complaint as resolved. |
 | `REJECT` | `REJECTED` | Manager invalidates the complaint. |
 | `RETRY` | `RETRY_VENDOR` | Manager re-routes complaint to a vendor (auto or manually assigned). |
-
 ---
-
-## State Transition Diagrams
-
-### 1. User / Organization Approval State Machine
-```
-[Signup] ──► PENDING ──► APPROVED
-                    └──► REJECTED
-```
-- **PENDING** is the initial state for all new `User` and `OrganizationDetails` records.
-- **APPROVED** is set by `ADMIN`/`SUPER_ADMIN` for organizations, or `VENDOR_ADMIN` for individuals.
-- **REJECTED** can be set by `ADMIN`/`SUPER_ADMIN`/`VENDOR_ADMIN` at any time.
-- Note: `IndividualDetails.companyApprovalStatus` tracks a second, separate approval by the employing organization's `VENDOR_ADMIN`.
-
----
-
-### 2. Document Processing State Machine
-```
-[Upload] ──► UPLOADED ──► UNDER_REVIEW ──► VERIFIED
-                                      └──► REJECTED ──► [Re-upload]
-```
-- **UPLOADED** is set immediately after a successful S3 upload.
-- **UNDER_REVIEW** is set when an admin begins reviewing the document.
-- **VERIFIED** is the final positive state; maps to `DocumentStatus.APPROVED`.
-- **REJECTED** triggers the user to upload a new, corrected document.
-
----
-
-### 3. Vehicle Status State Machine
-```
-[Registered] ──► AVAILABLE ──► ACTIVE ──► UNDER_MAINTENANCE ──► ACTIVE
-                    │                └──► INACTIVE ──────────────► AVAILABLE
-                    └──────────────────────────────────────────► DECOMMISSIONED
-```
-
----
-
-### 4. Complaint Lifecycle State Machine (Camunda Workflow)
-```
-[Driver Submits] ──► OPEN ──► IN_PROGRESS (Camunda started)
-                                    │
-                                    ▼
-                              AI Assessment
-                                    │
-                         ┌──────────┴──────────┐
-                    AI Resolved?             AI Unresolved
-                         │                       │
-                         ▼                       ▼
-                      RESOLVED           AI_PROCESSED
-                                               │
-                                     Auto Vendor Assignment
-                                        (by location + expertise + rating)
-                                               │
-                                    ┌──────────┴──────────┐
-                               No Vendor Available    Vendor Found
-                                    │                     │
-                                    ▼                     ▼
-                          ESCALATED_TO_MANAGER   ASSIGNED_TO_VENDOR
-                                    ▲                     │
-                                    │             Vendor Works on It
-                                    │                     │
-                                    │         ┌───────────┴───────────┐
-                                    │    Vendor Resolved?       Vendor Unresolved
-                                    │         │                       │
-                                    │         ▼                       ▼
-                                    │      RESOLVED          ESCALATED_TO_MANAGER
-                                    │                                │
-                                    └────────────────────────────────┘
-                                                                     │
-                                                          Manager Reviews
-                                                                     │
-                                           ┌─────────────────────────┼──────────────────────┐
-                                      RESOLVE                      RETRY                  REJECT
-                                           │                         │                      │
-                                           ▼                         ▼                      ▼
-                                       RESOLVED              RETRY_VENDOR ──► ASSIGNED_TO_VENDOR
-                                                                                    (restart vendor flow)
-```
