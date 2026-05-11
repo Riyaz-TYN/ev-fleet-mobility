@@ -1,6 +1,7 @@
 package com.evfleetmobility.complaintresolution.escalation.service.impl;
 import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
-
+import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
+import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
 import com.evfleetmobility.complaintresolution.escalation.service.EscalationService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
@@ -14,6 +15,9 @@ public class EscalationServiceImpl implements EscalationService, JavaDelegate {
 
     @Autowired
     private AuditLogService auditLogService;
+
+    @Autowired
+    private ComplaintRepository complaintRepository;
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -34,21 +38,33 @@ public class EscalationServiceImpl implements EscalationService, JavaDelegate {
         String reason = "VENDOR_UNRESOLVED";
 
         execution.setVariable("escalationReason", reason);
-        execution.setVariable("status", "ESCALATED");
+        execution.setVariable("status", "ESCALATED_TO_MANAGER");
 
         System.out.println("Escalation reason: " + reason);
+
+        // ✅ Persist escalation status and reason to DB
+        complaintRepository.findById(complaintId).ifPresent(complaint -> {
+            complaint.setStatus("ESCALATED_TO_MANAGER");
+            complaint.setEscalationReason("Vendor could not resolve the issue: " + vendorName);
+            complaint.addWorkHistory(
+                "Escalated to Manager",
+                "Vendor: " + vendorName,
+                "Vendor could not resolve — escalating to manager for review"
+            );
+            complaintRepository.save(complaint);
+        });
 
         auditLogService.saveLog(
                 complaintId,
                 vehicleId,
-                "ESCALATED",
+                "ESCALATED_TO_MANAGER",
                 "SYSTEM",
                 currentStatus,
-                "ESCALATED",
-                "Complaint escalated to manager because vendor could not resolve the issue",
+                "ESCALATED_TO_MANAGER",
+                "Complaint escalated to manager because vendor " + vendorName + " could not resolve the issue",
                 Map.of(
                         "reason", reason,
-                        "vehicleId", vehicleId,
+                        "vehicleId", vehicleId != null ? vehicleId : "",
                         "vendorName", vendorName
                 )
         );

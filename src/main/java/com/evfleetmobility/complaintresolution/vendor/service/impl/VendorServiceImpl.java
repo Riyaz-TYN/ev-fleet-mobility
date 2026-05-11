@@ -386,45 +386,41 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         String assignedVendor =
                 complaint.getAssignedTeam();
 
-        // --- Smart Appending Logic ---
-        complaint.addWorkHistory(
-            "Vendor Review", 
-            "Status: " + (Boolean.TRUE.equals(resolved) ? "RESOLVED" : "UNRESOLVED"), 
-            remarks
-        );
-        // -----------------------------
-
         if (Boolean.TRUE.equals(resolved)) {
-
             complaint.setStatus("RESOLVED");
-
-        } else {
-
-            complaint.setStatus(
-                    "ESCALATED_TO_MANAGER"
+            // ✅ Record which vendor resolved it
+            complaint.addWorkHistory(
+                "Resolved by Vendor",
+                "Vendor: " + assignedVendor,
+                remarks != null && !remarks.isBlank() ? remarks : "Issue successfully resolved"
             );
+        } else {
+            complaint.setStatus("ESCALATED_TO_MANAGER");
             complaint.setEscalationReason("Vendor could not resolve: " + (remarks != null ? remarks : "No remarks provided"));
+            // ✅ Record which vendor failed to resolve it
+            complaint.addWorkHistory(
+                "Vendor Unresolved",
+                "Vendor: " + assignedVendor,
+                remarks != null && !remarks.isBlank() ? remarks : "Vendor could not resolve the issue"
+            );
         }
 
-        complaint.setAssignedTeam(
-                assignedVendor
-        );
-
+        complaint.setAssignedTeam(assignedVendor);
         complaintRepository.save(complaint);
 
         auditLogService.saveLog(
                 complaintId,
                 complaint.getVehicleId(),
-                Boolean.TRUE.equals(resolved)
-                        ? "VENDOR_RESOLVED"
-                        : "VENDOR_ESCALATED",
+                Boolean.TRUE.equals(resolved) ? "VENDOR_RESOLVED" : "VENDOR_UNRESOLVED",
                 "VENDOR",
                 previousStatus,
                 complaint.getStatus(),
-                remarks,
+                Boolean.TRUE.equals(resolved)
+                    ? "Complaint resolved by vendor: " + assignedVendor
+                    : "Vendor " + assignedVendor + " could not resolve: " + (remarks != null ? remarks : ""),
                 java.util.Map.of(
-                        "vendorResolved",
-                        resolved
+                        "vendorName", assignedVendor,
+                        "vendorResolved", resolved
                 )
         );
 
