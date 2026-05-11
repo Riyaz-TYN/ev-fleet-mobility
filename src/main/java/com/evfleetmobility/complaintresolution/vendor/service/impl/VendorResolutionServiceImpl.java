@@ -1,5 +1,6 @@
 package com.evfleetmobility.complaintresolution.vendor.service.impl;
 
+import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 import com.evfleetmobility.complaintresolution.vendor.service.VendorResolutionService;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
@@ -10,40 +11,105 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component("vendorResolutionService")
 public class VendorResolutionServiceImpl implements VendorResolutionService, JavaDelegate {
 
     @Autowired
     private ComplaintRepository complaintRepository;
 
+    @Autowired
+    private AuditLogService auditLogService;
+
     @Override
     public void execute(DelegateExecution execution) {
 
-        System.out.println(" Vendor resolution running...");
+        System.out.println("Vendor resolution running...");
 
-        Long complaintId =
-                (Long) execution.getVariable("complaintId");
+        Long complaintId = (Long) execution.getVariable("complaintId");
+        String vehicleId = (String) execution.getVariable("vehicleId");
 
-        Complaint complaint =
-                complaintRepository.findById(complaintId)
-                        .orElse(null);
+        String vendorName = execution.getVariable("vendorName") != null
+                ? execution.getVariable("vendorName").toString()
+                : "Unknown Vendor";
+
+        Boolean vendorResolved = execution.getVariable("vendorResolved") != null
+                ? (Boolean) execution.getVariable("vendorResolved")
+                : false;
+
+        Complaint complaint = complaintRepository.findById(complaintId).orElse(null);
 
         if (complaint != null) {
 
-            String assignedVendor =
-                    complaint.getAssignedTeam();
+            String assignedVendor = complaint.getAssignedTeam() != null
+                    ? complaint.getAssignedTeam()
+                    : vendorName;
 
-            complaint.setStatus("RESOLVED");
+            String previousStatus = complaint.getStatus();
 
-            complaint.setAssignedTeam(
-                    assignedVendor
-            );
+            if (Boolean.TRUE.equals(vendorResolved)) {
+                complaint.setStatus("RESOLVED");
 
-            complaintRepository.save(complaint);
+                // ✅ Record which vendor resolved it in work summary
+                complaint.addWorkHistory(
+                    "Resolved by Vendor",
+                    "Vendor: " + assignedVendor,
+                    "Issue successfully resolved by vendor"
+                );
 
-            System.out.println(
-                    "âœ… Vendor resolved â†’ DB updated"
-            );
+                complaint.setAssignedTeam(assignedVendor);
+                complaintRepository.save(complaint);
+
+                // ✅ Audit log — who resolved it
+                auditLogService.saveLog(
+                        complaintId,
+                        vehicleId != null ? vehicleId : complaint.getVehicleId(),
+                        "VENDOR_RESOLVED",
+                        "VENDOR",
+                        previousStatus,
+                        "RESOLVED",
+                        "Complaint resolved by vendor: " + assignedVendor,
+                        Map.of(
+                            "vendorName", assignedVendor,
+                            "vehicleId", vehicleId != null ? vehicleId : ""
+                        )
+                );
+
+                System.out.println("Vendor resolved -> DB updated. Vendor: " + assignedVendor);
+
+            } else {
+                // Vendor could not resolve — this path feeds into EscalationServiceImpl
+                complaint.setStatus("ESCALATED_TO_MANAGER");
+                complaint.setEscalationReason("Vendor could not resolve: " + assignedVendor);
+
+                // ✅ Record vendor unresolved in work summary
+                complaint.addWorkHistory(
+                    "Vendor Unresolved",
+                    "Vendor: " + assignedVendor,
+                    "Vendor could not resolve the issue"
+                );
+
+                complaint.setAssignedTeam(assignedVendor);
+                complaintRepository.save(complaint);
+
+                // ✅ Audit log for vendor unresolved
+                auditLogService.saveLog(
+                        complaintId,
+                        vehicleId != null ? vehicleId : complaint.getVehicleId(),
+                        "VENDOR_UNRESOLVED",
+                        "VENDOR",
+                        previousStatus,
+                        "ESCALATED_TO_MANAGER",
+                        "Vendor " + assignedVendor + " could not resolve the complaint",
+                        Map.of(
+                            "vendorName", assignedVendor,
+                            "vehicleId", vehicleId != null ? vehicleId : ""
+                        )
+                );
+
+                System.out.println("Vendor unresolved -> escalating. Vendor: " + assignedVendor);
+            }
         }
     }
 }
