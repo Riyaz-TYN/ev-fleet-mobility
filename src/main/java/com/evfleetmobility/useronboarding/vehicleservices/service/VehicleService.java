@@ -7,8 +7,12 @@ import java.util.List;
 
 public interface VehicleService {
     VehicleResponse addVehicle(VehicleRequest request);
+
     VehicleResponse updateVehicle(Long vehicleId, VehicleRequest request);
+
     void deleteVehicle(Long vehicleId);
+
     VehicleResponse getVehicleById(Long vehicleId);
+
     List<VehicleResponse> getAllVehicles();
 }

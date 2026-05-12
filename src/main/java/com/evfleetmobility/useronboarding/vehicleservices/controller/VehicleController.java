@@ -14,34 +14,45 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/vehicles")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class VehicleController {
 
     private final VehicleService vehicleService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<VehicleResponse>> addVehicle(@RequestBody VehicleRequest request) {
         return ResponseEntity.ok(new ApiResponse<>("Vehicle added successfully", vehicleService.addVehicle(request)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<VehicleResponse>> updateVehicle(@PathVariable Long id, @RequestBody VehicleRequest request) {
-        return ResponseEntity.ok(new ApiResponse<>("Vehicle updated successfully", vehicleService.updateVehicle(id, request)));
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<VehicleResponse>> updateVehicle(@PathVariable Long id,
+            @RequestBody VehicleRequest request) {
+        return ResponseEntity
+                .ok(new ApiResponse<>("Vehicle updated successfully", vehicleService.updateVehicle(id, request)));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteVehicle(@PathVariable Long id) {
         vehicleService.deleteVehicle(id);
         return ResponseEntity.ok(new ApiResponse<>("Vehicle deleted successfully", null));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'DRIVER', 'MANAGER', 'VENDOR_ADMIN')")
     public ResponseEntity<ApiResponse<VehicleResponse>> getVehicleById(@PathVariable Long id) {
         return ResponseEntity.ok(new ApiResponse<>("Vehicle fetched successfully", vehicleService.getVehicleById(id)));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'DRIVER', 'MANAGER', 'VENDOR_ADMIN')")
     public ResponseEntity<ApiResponse<List<VehicleResponse>>> getAllVehicles() {
         return ResponseEntity.ok(new ApiResponse<>("Vehicles fetched successfully", vehicleService.getAllVehicles()));
     }
+    
+
 }
+
+
+
