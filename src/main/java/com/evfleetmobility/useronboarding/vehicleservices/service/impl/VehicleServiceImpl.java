@@ -47,6 +47,8 @@ public class VehicleServiceImpl implements VehicleService {
                 vehicle.setStatus(VehicleStatus.valueOf(request.getStatus().toUpperCase()));
             } catch (IllegalArgumentException ignored) {
             }
+        } else {
+            vehicle.setStatus(user != null ? VehicleStatus.ACTIVE : VehicleStatus.AVAILABLE);
         }
         vehicle.setYearOfManufacture(request.getYearOfManufacture());
         vehicle.setBatteryCapacityKwh(request.getBatteryCapacityKwh());
@@ -59,10 +61,22 @@ public class VehicleServiceImpl implements VehicleService {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new VehicleNotFoundException("Vehicle not found with ID: " + vehicleId));
 
-        if (request.getUserId() != null && !request.getUserId().equals(vehicle.getUser().getId())) {
-            User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + request.getUserId()));
-            vehicle.setUser(user);
+        if (request.getUserId() != null) {
+            if (vehicle.getUser() == null || !request.getUserId().equals(vehicle.getUser().getId())) {
+                User user = userRepository.findById(request.getUserId())
+                        .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + request.getUserId()));
+                vehicle.setUser(user);
+                // Automatically set to ACTIVE if a new driver is assigned and status isn't explicitly changed
+                if (request.getStatus() == null) {
+                    vehicle.setStatus(VehicleStatus.ACTIVE);
+                }
+            }
+        } else if (request.getUserId() == null && vehicle.getUser() != null) {
+            vehicle.setUser(null);
+            // Automatically set to AVAILABLE if driver is removed and status isn't explicitly changed
+            if (request.getStatus() == null) {
+                vehicle.setStatus(VehicleStatus.AVAILABLE);
+            }
         }
 
         if (request.getMake() != null)
