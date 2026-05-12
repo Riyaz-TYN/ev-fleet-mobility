@@ -39,15 +39,22 @@ public class ProfileServiceImpl implements ProfileService {
                 ind.setUser(user);
             }
 
-            if (request.getFullName() != null) ind.setFullName(request.getFullName().trim());
-            if (request.getPhoneNumber() != null) ind.setPhoneNumber(request.getPhoneNumber().trim());
-            if (request.getCountryCode() != null) ind.setCountryCode(request.getCountryCode().trim());
-            if (request.getAddressLine1() != null) ind.setAddressLine1(request.getAddressLine1().trim());
-            if (request.getAddressLine2() != null) ind.setAddressLine2(request.getAddressLine2().trim());
-            if (request.getPanNumber() != null) ind.setPanNumber(request.getPanNumber().trim());
-            if (request.getLatitude() != null) ind.setLatitude(request.getLatitude());
-            if (request.getLongitude() != null) ind.setLongitude(request.getLongitude());
-
+            if (request.getFullName() != null)
+                ind.setFullName(request.getFullName().trim());
+            if (request.getPhoneNumber() != null)
+                ind.setPhoneNumber(request.getPhoneNumber().trim());
+            if (request.getCountryCode() != null)
+                ind.setCountryCode(request.getCountryCode().trim());
+            if (request.getAddressLine1() != null)
+                ind.setAddressLine1(request.getAddressLine1().trim());
+            if (request.getAddressLine2() != null)
+                ind.setAddressLine2(request.getAddressLine2().trim());
+            if (request.getPanNumber() != null)
+                ind.setPanNumber(request.getPanNumber().trim());
+            if (request.getLatitude() != null)
+                ind.setLatitude(request.getLatitude());
+            if (request.getLongitude() != null)
+                ind.setLongitude(request.getLongitude());
 
             if (request.getCompanyName() != null && !request.getCompanyName().isBlank()) {
                 ind.setCompanyName(request.getCompanyName());
@@ -73,15 +80,24 @@ public class ProfileServiceImpl implements ProfileService {
                 org = new OrganizationDetails();
             }
 
-            if (request.getCompanyName() != null) org.setCompanyName(request.getCompanyName().trim());
-            if (request.getCompanyEmail() != null) org.setEmail(request.getCompanyEmail().trim());
-            if (request.getGstin() != null) org.setGstin(request.getGstin().trim());
-            if (request.getPhoneNumber() != null) org.setPhoneNumber(request.getPhoneNumber().trim());
-            if (request.getCountryCode() != null) org.setCountryCode(request.getCountryCode().trim());
-            if (request.getAddressLine1() != null) org.setAddressLine1(request.getAddressLine1().trim());
-            if (request.getPanNumber() != null) org.setPanNumber(request.getPanNumber().trim());
-            if (request.getLatitude() != null) org.setLatitude(request.getLatitude());
-            if (request.getLongitude() != null) org.setLongitude(request.getLongitude());
+            if (request.getCompanyName() != null)
+                org.setCompanyName(request.getCompanyName().trim());
+            if (request.getCompanyEmail() != null)
+                org.setEmail(request.getCompanyEmail().trim());
+            if (request.getGstin() != null)
+                org.setGstin(request.getGstin().trim());
+            if (request.getPhoneNumber() != null)
+                org.setPhoneNumber(request.getPhoneNumber().trim());
+            if (request.getCountryCode() != null)
+                org.setCountryCode(request.getCountryCode().trim());
+            if (request.getAddressLine1() != null)
+                org.setAddressLine1(request.getAddressLine1().trim());
+            if (request.getPanNumber() != null)
+                org.setPanNumber(request.getPanNumber().trim());
+            if (request.getLatitude() != null)
+                org.setLatitude(request.getLatitude());
+            if (request.getLongitude() != null)
+                org.setLongitude(request.getLongitude());
 
             org.setVendorAvailability(request.getVendorAvailability());
             org.setExpertise(request.getExpertise());
@@ -121,41 +137,40 @@ public class ProfileServiceImpl implements ProfileService {
             IndividualDetails ind = user.getIndividualDetails();
             if (ind != null) {
                 builder
-                    .fullName(ind.getFullName())
-                    .gender(ind.getGender())
-                    .phoneNumber(ind.getPhoneNumber())
-                    .countryCode(ind.getCountryCode())
-                    .addressLine1(ind.getAddressLine1())
-                    .addressLine2(ind.getAddressLine2())
-                    .panNumber(ind.getPanNumber())
-                    .latitude(ind.getLatitude())
-                    .longitude(ind.getLongitude());
+                        .fullName(ind.getFullName())
+                        .gender(ind.getGender())
+                        .phoneNumber(ind.getPhoneNumber())
+                        .countryCode(ind.getCountryCode())
+                        .addressLine1(ind.getAddressLine1())
+                        .addressLine2(ind.getAddressLine2())
+                        .panNumber(ind.getPanNumber())
+                        .latitude(ind.getLatitude())
+                        .longitude(ind.getLongitude());
 
                 if (ind.getOrganizationDetails() != null) {
                     builder.companyName(ind.getOrganizationDetails().getCompanyName());
                 } else {
                     builder.companyName(ind.getCompanyName());
                 }
-                
+
                 builder.companyApprovalStatus(
-                    ind.getCompanyApprovalStatus() != null ? ind.getCompanyApprovalStatus().name() : "PENDING"
-                );
+                        ind.getCompanyApprovalStatus() != null ? ind.getCompanyApprovalStatus().name() : "PENDING");
             }
         } else if (user.getUserType() == UserType.ORGANIZATION) {
             OrganizationDetails org = user.getOrganizationDetails();
             if (org != null) {
                 builder
-                    .fullName(user.getFullName())
-                    .companyName(org.getCompanyName())
-                    .companyEmail(org.getEmail())
-                    .gstin(org.getGstin())
-                    .companyPhoneNumber(org.getPhoneNumber())
-                    .companyCountryCode(org.getCountryCode())
-                    .companyAddressLine1(org.getAddressLine1())
-                    .panNumber(org.getPanNumber())
-                    .latitude(org.getLatitude())
-                    .longitude(org.getLongitude())
-                    .gstinDocumentUrl(org.getGstinDocumentUrl());
+                        .fullName(user.getFullName())
+                        .companyName(org.getCompanyName())
+                        .companyEmail(org.getEmail())
+                        .gstin(org.getGstin())
+                        .companyPhoneNumber(org.getPhoneNumber())
+                        .companyCountryCode(org.getCountryCode())
+                        .companyAddressLine1(org.getAddressLine1())
+                        .panNumber(org.getPanNumber())
+                        .latitude(org.getLatitude())
+                        .longitude(org.getLongitude())
+                        .gstinDocumentUrl(org.getGstinDocumentUrl());
             }
         }
 

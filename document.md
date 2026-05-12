@@ -46,7 +46,9 @@ Register a new user. Auto-creates `IndividualDetails` or `OrganizationDetails` b
 
 ### **Signup & Identity**
 - **Endpoint**: `POST /api/auth/signup`
-- **Request Body**:
+
+#### **Example: Individual Signup**
+Used when a person registers as an employee or independent driver.
 ```json
 {
   "fullName": "John Doe",
@@ -60,7 +62,24 @@ Register a new user. Auto-creates `IndividualDetails` or `OrganizationDetails` b
   "gender": "MALE"
 }
 ```
+
+#### **Example: Organization Signup**
+Used when a company account is being created.
+```json
+{
+  "fullName": "Alice Smith",
+  "email": "admin@ev-service.com",
+  "password": "securePass123",
+  "role": "VENDOR_ADMIN",
+  "userType": "ORGANIZATION",
+  "phoneNumber": "1234567890",
+  "countryCode": "+1",
+  "companyName": "EV Service Solutions"
+}
+```
+
 *Note: Roles can be `DRIVER`, `VENDOR_ADMIN`, `MANAGER`, `ADMIN`, `SUPER_ADMIN`.*
+*Note: `companyName` is **mandatory** for all signup types to ensure the user is linked to an organization entity.*
 
 ### **Login**
 - **Endpoint**: `POST /api/auth/login`
@@ -77,21 +96,46 @@ Register a new user. Auto-creates `IndividualDetails` or `OrganizationDetails` b
 
 ## 4. Profile & Document Management
 
-### **Complete Profile (Individual)**
+### **Complete Profile**
 - **Endpoint**: `POST /api/profile/complete`
 - **Method**: `Multipart Form-Data`
-- **Fields**:
-    - `fullName` (Text)
-    - `phoneNumber` (Text)
-    - `addressLine1` (Text)
-    - `panNumber` (Text)
-    - `panCardFile` (File - Image/PDF)
-    - `companyName` (Text) - Links to existing organization.
+
+#### **Fields for Individual (Driver/Manager)**
+*Note: Basic info (Name, Phone, Company) is already captured during signup.*
+
+| Field | Type | Description |
+|---|---|---|
+| `addressLine1` | Text | Primary address |
+| `addressLine2` | Text | Secondary address |
+| `panNumber` | Text | Tax ID |
+| `panCardFile` | File | Image/PDF of PAN card (stored as BYTEA) |
+| `latitude` / `longitude` | Double |User location  |
+
+#### **Fields for Organization (Vendor/Admin)**
+*Note: Basic info (Company Name, Email) is already captured during signup.*
+
+| Field | Type | Description |
+|---|---|---|
+| `addressLine1` | Text | Business physical address |
+| `gstin` | Text | GST identification number |
+| `gstinDocumentFile` | File | PDF/Image of GSTIN (uploaded to S3) |
+| `panNumber` | Text | Company PAN |
+| `panCardFile` | File | Image/PDF of PAN card (stored as BYTEA) |
+| `vendorAvailability` | Boolean | True/False availability status |
+| `expertise` | Text | Service specialization (e.g., "Battery") |
+| `latitude` / `longitude` | Double | HQ/Shop GPS location |
 
 ### **Admin Approvals**
 - **Endpoint**: `POST /api/status/update`
-- **Roles**: `ADMIN`, `SUPER_ADMIN`
-- **Body**: `{"targetUserId": 10, "status": "APPROVED", "type": "USER"}`
+- **Roles**: `ADMIN`, `SUPER_ADMIN`, `VENDOR_ADMIN` (for employees)
+- **Request Body**:
+```json
+{
+  "targetId": 10,
+  "status": "APPROVED"
+}
+```
+*Note: `VENDOR_ADMIN` can only approve individuals linked to their own organization.*
 
 ---
 
@@ -224,7 +268,7 @@ The system automatically triggers AI analysis. The driver then interacts with th
 ---
 
 ## 11. Vehicles  —  `/api/vehicles`
-> **All endpoints require:** `ADMIN` role
+> **Note:** `GET` endpoints are available to `DRIVER`, `MANAGER`, and `VENDOR_ADMIN`. CRUD (POST/PUT/DELETE) require `ADMIN` role.
 
 ### POST `/api/vehicles` — Register Vehicle
 ```json
@@ -246,7 +290,23 @@ The system automatically triggers AI analysis. The driver then interacts with th
 ### PUT `/api/vehicles/{id}` — Update Vehicle  (same body as POST)
 ### DELETE `/api/vehicles/{id}` — Delete Vehicle
 ### GET `/api/vehicles/{id}` — Get Vehicle by ID
+- **Auth:** `ADMIN`, `SUPER_ADMIN`, `DRIVER`, `MANAGER`, `VENDOR_ADMIN`
+- **Response:** `VehicleResponse` object.
+
 ### GET `/api/vehicles` — Get All Vehicles
+- **Auth:** `ADMIN`, `SUPER_ADMIN`, `DRIVER`, `MANAGER`, `VENDOR_ADMIN`
+- **Response:** `List<VehicleResponse>`
+
+#### **VehicleResponse DTO**
+| Field | Type | Description |
+|---|---|---|
+| `id` | Long | Internal ID |
+| `userId` | Long | ID of the assigned driver |
+| `make` | String | e.g., "Tata" |
+| `model` | String | e.g., "Nexon EV" |
+| `licensePlate` | String | Vehicle registration number |
+| `status` | String | `AVAILABLE`, `ACTIVE`, `UNDER_MAINTENANCE`, etc. |
+| `batteryCapacityKwh` | Double | Battery pack size |
 
 ---
 
@@ -386,5 +446,52 @@ Returns the dynamic field configuration for the complaint submission form.
 | `escalationReason` | TEXT | Set when AI limit reached or user unsatisfied |
 | `workSummary` | TEXT | Chronological append-only action log |
 | `createdAt` | LocalDateTime | Immutable timestamp set on creation |
+
+---
+
+## 18. User & Organization Management — `/api/users`
+
+### GET `/api/users` — List All Users
+- **Auth:** `ADMIN`, `SUPER_ADMIN`, `VENDOR_ADMIN`
+- **Params:** `status` (Optional - `PENDING`, `APPROVED`, etc.)
+- **Logic:** Platform Admins see all; Vendor Admins see only their organization's employees.
+
+### GET `/api/users/organizations` — List Organizations
+- **Auth:** `ADMIN`, `SUPER_ADMIN`
+
+### GET `/api/users/individuals` — List Individuals
+- **Auth:** `ADMIN`, `SUPER_ADMIN`, `VENDOR_ADMIN`
+
+### PUT `/api/users/assign-vehicle` — Assign Driver to Vehicle
+- **Auth:** `ADMIN`, `SUPER_ADMIN`, `VENDOR_ADMIN`
+- **Body:** `{ "driverId": 12, "vehicleId": 5 }`
+
+### PUT `/api/users/{targetUserId}/rating` — Update Vendor Rating
+- **Auth:** `ADMIN`, `SUPER_ADMIN`
+- **Body:** `{ "rating": 4.5 }`
+
+---
+
+## 19. Vendor Management — `/api/vendors`
+
+### GET `/api/vendors` — List All Vendors
+- **Auth:** `MANAGER`, `ADMIN`, `SUPER_ADMIN`
+
+### GET `/api/vendors/available` — List Active/Available Vendors
+- **Auth:** `VENDOR_ADMIN`, `MANAGER`, `ADMIN`, `SUPER_ADMIN`
+
+---
+
+## 20. Audit Logs — `/api/audit-logs`
+> **Auth:** `ADMIN`, `SUPER_ADMIN`, `MANAGER`
+
+### POST `/api/audit-logs/complaint` — Logs by Complaint
+- **Body:** `{ "complaintId": 1 }`
+
+### POST `/api/audit-logs/vehicle` — Logs by Vehicle
+- **Body:** `{ "vehicleId": "5" }`
+
+### POST `/api/audit-logs/action` — Logs by Action Type
+- **Body:** `{ "action": "AI_ANALYZED" }`
 
 ---

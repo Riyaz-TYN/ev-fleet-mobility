@@ -23,13 +23,13 @@ public class VehicleServiceImpl implements VehicleService {
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
 
-@Override
+    @Override
     public VehicleResponse addVehicle(VehicleRequest request) {
 
         User user = null;
         if (request.getUserId() != null) {
             user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + request.getUserId()));
+                    .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + request.getUserId()));
         }
 
         Vehicle vehicle = new Vehicle();
@@ -42,7 +42,8 @@ public class VehicleServiceImpl implements VehicleService {
         if (request.getStatus() != null) {
             try {
                 vehicle.setStatus(VehicleStatus.valueOf(request.getStatus().toUpperCase()));
-            } catch (IllegalArgumentException ignored) {}
+            } catch (IllegalArgumentException ignored) {
+            }
         }
         vehicle.setYearOfManufacture(request.getYearOfManufacture());
         vehicle.setBatteryCapacityKwh(request.getBatteryCapacityKwh());
@@ -61,18 +62,26 @@ public class VehicleServiceImpl implements VehicleService {
             vehicle.setUser(user);
         }
 
-        if (request.getMake() != null) vehicle.setMake(request.getMake());
-        if (request.getModel() != null) vehicle.setModel(request.getModel());
-        if (request.getLicensePlate() != null) vehicle.setLicensePlate(request.getLicensePlate());
-        if (request.getVin() != null) vehicle.setVin(request.getVin());
-        if (request.getChassisNo() != null) vehicle.setChassisNo(request.getChassisNo());
+        if (request.getMake() != null)
+            vehicle.setMake(request.getMake());
+        if (request.getModel() != null)
+            vehicle.setModel(request.getModel());
+        if (request.getLicensePlate() != null)
+            vehicle.setLicensePlate(request.getLicensePlate());
+        if (request.getVin() != null)
+            vehicle.setVin(request.getVin());
+        if (request.getChassisNo() != null)
+            vehicle.setChassisNo(request.getChassisNo());
         if (request.getStatus() != null) {
             try {
                 vehicle.setStatus(VehicleStatus.valueOf(request.getStatus().toUpperCase()));
-            } catch (IllegalArgumentException ignored) {}
+            } catch (IllegalArgumentException ignored) {
+            }
         }
-        if (request.getYearOfManufacture() != null) vehicle.setYearOfManufacture(request.getYearOfManufacture());
-        if (request.getBatteryCapacityKwh() != null) vehicle.setBatteryCapacityKwh(request.getBatteryCapacityKwh());
+        if (request.getYearOfManufacture() != null)
+            vehicle.setYearOfManufacture(request.getYearOfManufacture());
+        if (request.getBatteryCapacityKwh() != null)
+            vehicle.setBatteryCapacityKwh(request.getBatteryCapacityKwh());
 
         return mapToResponse(vehicleRepository.save(vehicle));
     }
