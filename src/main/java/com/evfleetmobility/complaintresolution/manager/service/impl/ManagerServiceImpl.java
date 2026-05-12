@@ -4,6 +4,8 @@ import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 import com.evfleetmobility.complaintresolution.manager.service.ManagerService;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
+import com.evfleetmobility.useronboarding.vehicleservices.entity.VehicleStatus;
+import com.evfleetmobility.useronboarding.vehicleservices.repository.VehicleRepository;
 
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
@@ -25,6 +27,9 @@ public class ManagerServiceImpl implements ManagerService {
     @Autowired
     private AuditLogService auditLogService;
 
+    @Autowired
+    private VehicleRepository vehicleRepository;
+
     @Override
     public String managerDecision(Long complaintId, String decision, String remarks) {
         Complaint complaint = complaintRepository.findById(complaintId)
@@ -45,8 +50,20 @@ public class ManagerServiceImpl implements ManagerService {
 
         if ("RESOLVE".equalsIgnoreCase(decision)) {
             complaint.setStatus("RESOLVED");
+            if (complaint.getVehicleId() != null) {
+                vehicleRepository.findById(Long.parseLong(complaint.getVehicleId())).ifPresent(vehicle -> {
+                    vehicle.setStatus(VehicleStatus.ACTIVE);
+                    vehicleRepository.save(vehicle);
+                });
+            }
         } else if ("REJECT".equalsIgnoreCase(decision)) {
             complaint.setStatus("REJECTED");
+            if (complaint.getVehicleId() != null) {
+                vehicleRepository.findById(Long.parseLong(complaint.getVehicleId())).ifPresent(vehicle -> {
+                    vehicle.setStatus(VehicleStatus.ACTIVE);
+                    vehicleRepository.save(vehicle);
+                });
+            }
         } else if ("RETRY".equalsIgnoreCase(decision)) {
             complaint.setStatus("RETRY_VENDOR");
         }

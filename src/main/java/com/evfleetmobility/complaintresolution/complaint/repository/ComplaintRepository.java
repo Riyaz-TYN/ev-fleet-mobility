@@ -1,13 +1,15 @@
 package com.evfleetmobility.complaintresolution.complaint.repository;
 
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
-    List<Complaint> findByCustomerIdOrderByCreatedAtDesc(String customerId);
+    Page<Complaint> findByCustomerIdOrderByCreatedAtDesc(String customerId, Pageable pageable);
 
     List<Complaint> findByCustomerIdAndIssueCategory(
             String customerId,
@@ -19,22 +21,25 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             String issueCategory
     );
 
-    List<Complaint> findByVehicleIdOrderByCreatedAtDesc(String vehicleId);
+    Page<Complaint> findByVehicleIdOrderByCreatedAtDesc(String vehicleId, Pageable pageable);
 
-    List<Complaint> findByStatusOrderByCreatedAtDesc(String status);
+    Page<Complaint> findByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
 
-    List<Complaint> findByPriorityOrderByCreatedAtDesc(String priority);
+    Page<Complaint> findByPriorityOrderByCreatedAtDesc(String priority, Pageable pageable);
 
-    List<Complaint> findByAssignedTeamOrderByCreatedAtDesc(
-            String assignedTeam
+    Page<Complaint> findByAssignedTeamOrderByCreatedAtDesc(
+            String assignedTeam, Pageable pageable
     );
 
-    List<Complaint> findByVendorIdOrderByCreatedAtDesc(Long vendorId);
+    Page<Complaint> findByVendorIdOrderByCreatedAtDesc(Long vendorId, Pageable pageable);
 
     List<Complaint> findByCustomerId(String customerId);
 
     List<Complaint> findByVehicleId(String vehicleId);
 
     List<Complaint> findByStatus(String status);
-    List<Complaint> findByTechnicianIdOrderByCreatedAtDesc(Long technicianId);
+    
+    Page<Complaint> findByTechnicianIdOrderByCreatedAtDesc(Long technicianId, Pageable pageable);
+
+    List<Complaint> findByVendorId(Long vendorId);
 }

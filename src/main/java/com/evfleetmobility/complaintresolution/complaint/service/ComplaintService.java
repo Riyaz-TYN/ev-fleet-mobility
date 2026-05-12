@@ -3,6 +3,7 @@ package com.evfleetmobility.complaintresolution.complaint.service;
 import com.evfleetmobility.complaintresolution.complaint.dto.ComplaintRequestDTO;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.useronboarding.profileservices.entity.OrganizationDetails;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -10,12 +11,12 @@ public interface ComplaintService {
 
     String saveComplaint(ComplaintRequestDTO request, String customerId);
 
-    List<Complaint> getComplaints();
+    Page<Complaint> getComplaints(int page, int size);
 
     Complaint getComplaintDetails(Long complaintId);
 
-    List<Complaint> getComplaintsByVehicle(String vehicleId);
-    List<Complaint> getComplaintStatus(String status);
+    Page<Complaint> getComplaintsByVehicle(String vehicleId, int page, int size);
+    Page<Complaint> getComplaintStatus(String status, int page, int size);
 
     List<Complaint> getAssignedComplaintsByVendorId(Long vendorId);
 
@@ -36,12 +37,12 @@ public interface ComplaintService {
     List<OrganizationDetails> getAvailableVendors();
     OrganizationDetails getVendorById(Long vendorId);
 
-    List<Complaint> getMyComplaints(String customerId);
-    List<Complaint> getComplaintsByVehicleId(String vehicleId);
-    List<Complaint> getAllComplaints();
+    Page<Complaint> getMyComplaints(String customerId, int page, int size);
+    Page<Complaint> getComplaintsByVehicleId(String vehicleId, int page, int size);
+    Page<Complaint> getAllComplaints(int page, int size);
     Complaint getComplaintById(Long id);
-    List<Complaint> getComplaintsByStatus(String status);
-    List<Complaint> getComplaintsByPriority(String priority);
+    Page<Complaint> getComplaintsByStatus(String status, int page, int size);
+    Page<Complaint> getComplaintsByPriority(String priority, int page, int size);
 
     Complaint assignTechnician(Long complaintId, Long technicianId);
 

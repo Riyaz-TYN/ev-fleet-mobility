@@ -14,8 +14,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
-import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -71,13 +73,13 @@ public class ServiceHistoryServiceImpl implements ServiceHistoryService {
     }
 
     @Override
-    public List<ServiceHistoryResponse> getHistoryByVehicleId(Long vehicleId) {
+    public Page<ServiceHistoryResponse> getHistoryByVehicleId(Long vehicleId, int page, int size) {
         if (!vehicleRepository.existsById(vehicleId)) {
             throw new VehicleNotFoundException("Vehicle not found with ID: " + vehicleId);
         }
-        return serviceHistoryRepository.findByVehicleId(vehicleId).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(page, size);
+        return serviceHistoryRepository.findByVehicleId(vehicleId, pageable)
+                .map(this::mapToResponse);
     }
 
     @Override

@@ -5,10 +5,11 @@ import com.evfleetmobility.useronboarding.documentservices.dto.DocumentResponse;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
 
 public interface DocumentService {
     DocumentResponse upload(Long userId, MultipartFile file, String documentType);
-    List<DocumentResponse> getMyDocuments(Long userId);
+    Page<DocumentResponse> getMyDocuments(Long userId, int page, int size);
     String getPresignedUrl(Long userId, Long documentId);
     DocumentDownloadResponse getPanCard(Long userId);
     DocumentDownloadResponse getPanCardForAdmin(Long userId);

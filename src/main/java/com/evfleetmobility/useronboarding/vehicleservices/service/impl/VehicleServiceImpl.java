@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -102,10 +105,10 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
-    public List<VehicleResponse> getAllVehicles() {
-        return vehicleRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<VehicleResponse> getAllVehicles(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return vehicleRepository.findAll(pageable)
+                .map(this::mapToResponse);
     }
 
     private VehicleResponse mapToResponse(Vehicle vehicle) {

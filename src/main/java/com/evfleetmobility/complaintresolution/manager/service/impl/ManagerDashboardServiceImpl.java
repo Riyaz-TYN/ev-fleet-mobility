@@ -8,6 +8,8 @@ import com.evfleetmobility.complaintresolution.vendor.dto.VendorDTO;
 import com.evfleetmobility.useronboarding.authservices.entity.ApprovalStatus;
 import com.evfleetmobility.useronboarding.profileservices.entity.OrganizationDetails;
 import com.evfleetmobility.useronboarding.profileservices.repository.OrganizationRepository;
+import com.evfleetmobility.useronboarding.vehicleservices.entity.VehicleStatus;
+import com.evfleetmobility.useronboarding.vehicleservices.repository.VehicleRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.camunda.bpm.engine.TaskService;
@@ -25,19 +27,22 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
     private final OrganizationRepository organizationRepo;
     private final AuditLogService auditLogService;
     private final TaskService taskService;
+    private final VehicleRepository vehicleRepository;
 
     public ManagerDashboardServiceImpl(
             ComplaintRepository complaintRepository,
             ObjectMapper objectMapper,
             OrganizationRepository organizationRepo,
             AuditLogService auditLogService,
-            TaskService taskService
+            TaskService taskService,
+            VehicleRepository vehicleRepository
     ) {
         this.complaintRepository = complaintRepository;
         this.objectMapper = objectMapper;
         this.organizationRepo = organizationRepo;
         this.auditLogService = auditLogService;
         this.taskService = taskService;
+        this.vehicleRepository = vehicleRepository;
     }
 
     public List<Map<String, Object>> getAllComplaintsForManager() {
@@ -45,7 +50,7 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
     }
 
     public List<Map<String, Object>> getEscalatedComplaintsForManager() {
-        return convertToMapList(complaintRepository.findByStatusOrderByCreatedAtDesc("ESCALATED_TO_MANAGER"));
+        return convertToMapList(complaintRepository.findByStatus("ESCALATED_TO_MANAGER"));
     }
 
     private List<Map<String, Object>> convertToMapList(List<Complaint> complaints) {
@@ -90,6 +95,13 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
         complaint.setVendorId(vendor.getId());
         complaint.setEscalationReason(null);
 
+        if (complaint.getVehicleId() != null) {
+            vehicleRepository.findById(Long.parseLong(complaint.getVehicleId())).ifPresent(vehicle -> {
+                vehicle.setStatus(VehicleStatus.INACTIVE);
+                vehicleRepository.save(vehicle);
+            });
+        }
+
         complaint.addWorkHistory("Vendor Assigned", vendor.getCompanyName() + " (ID: " + vendorId + ")", null);
 
         Complaint savedComplaint = complaintRepository.save(complaint);
@@ -132,6 +144,13 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
         complaint.setStatus("REJECTED");
         complaint.setAssignedTeam(null);
         complaint.setVendorId(null);
+        
+        if (complaint.getVehicleId() != null) {
+            vehicleRepository.findById(Long.parseLong(complaint.getVehicleId())).ifPresent(vehicle -> {
+                vehicle.setStatus(VehicleStatus.ACTIVE);
+                vehicleRepository.save(vehicle);
+            });
+        }
         
         complaint.addWorkHistory("Complaint Rejected", "Decision by Manager", null);
         
@@ -196,6 +215,13 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
         complaint.setAssignedTeam(vendor.getCompanyName());
         complaint.setStatus("ASSIGNED_TO_VENDOR");
         complaint.setEscalationReason(null);
+
+        if (complaint.getVehicleId() != null) {
+            vehicleRepository.findById(Long.parseLong(complaint.getVehicleId())).ifPresent(vehicle -> {
+                vehicle.setStatus(VehicleStatus.INACTIVE);
+                vehicleRepository.save(vehicle);
+            });
+        }
 
         complaint.addWorkHistory("Vendor Reassigned", vendor.getCompanyName() + " (ID: " + vendorId + ")", null);
 

@@ -22,6 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -34,13 +38,17 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserDetailsResponse> getUsersByRoleAndStatus(Long callerId, ApprovalStatus status) {
+    public Page<UserDetailsResponse> getUsersByRoleAndStatus(Long callerId, ApprovalStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
         User caller = userRepository.findById(callerId)
                 .orElseThrow(() -> new UserNotFoundException("Caller not found"));
 
         if ("SUPER_ADMIN".equalsIgnoreCase(caller.getRole())) {
             List<User> users = status != null ? userRepository.findByApprovalStatus(status) : userRepository.findAll();
-            return users.stream().map(this::mapToUserDetailsResponse).collect(Collectors.toList());
+            List<UserDetailsResponse> list = users.stream().map(this::mapToUserDetailsResponse).collect(Collectors.toList());
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), list.size());
+            return new PageImpl<>(start <= end ? list.subList(start, end) : List.of(), pageable, list.size());
         } else if ("ADMIN".equalsIgnoreCase(caller.getRole()) || "VENDOR_ADMIN".equalsIgnoreCase(caller.getRole())) {
             String callerCompany = (caller.getOrganizationDetails() != null) ? caller.getOrganizationDetails().getCompanyName() : 
                                    (caller.getIndividualDetails() != null && caller.getIndividualDetails().getOrganizationDetails() != null) ? 
@@ -50,7 +58,7 @@ public class AdminServiceImpl implements AdminService {
             final String finalCompany = callerCompany;
 
             List<User> users = status != null ? userRepository.findByApprovalStatus(status) : userRepository.findAll();
-            return users.stream()
+            List<UserDetailsResponse> list = users.stream()
                     .filter(u -> {
                         if ("SUPER_ADMIN".equalsIgnoreCase(u.getRole())) return false;
                         
@@ -73,13 +81,17 @@ public class AdminServiceImpl implements AdminService {
                     })
                     .map(this::mapToUserDetailsResponse)
                     .collect(Collectors.toList());
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), list.size());
+            return new PageImpl<>(start <= end ? list.subList(start, end) : List.of(), pageable, list.size());
         }
         throw new AccessDeniedException("You do not have permission to list users");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserDetailsResponse> getIndividualsByRoleAndStatus(Long callerId, ApprovalStatus status) {
+    public Page<UserDetailsResponse> getIndividualsByRoleAndStatus(Long callerId, ApprovalStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
         User caller = userRepository.findById(callerId)
                 .orElseThrow(() -> new UserNotFoundException("Caller not found"));
 
@@ -87,7 +99,10 @@ public class AdminServiceImpl implements AdminService {
             List<User> inds = status != null
                     ? userRepository.findByUserTypeAndApprovalStatus(UserType.INDIVIDUAL, status)
                     : userRepository.findByUserType(UserType.INDIVIDUAL);
-            return inds.stream().map(this::mapToUserDetailsResponse).collect(Collectors.toList());
+            List<UserDetailsResponse> list = inds.stream().map(this::mapToUserDetailsResponse).collect(Collectors.toList());
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), list.size());
+            return new PageImpl<>(start <= end ? list.subList(start, end) : List.of(), pageable, list.size());
         } else if ("ADMIN".equalsIgnoreCase(caller.getRole())) {
             String callerCompany = null;
             if (caller.getOrganizationDetails() != null) {
@@ -105,7 +120,7 @@ public class AdminServiceImpl implements AdminService {
                     ? userRepository.findByUserTypeAndApprovalStatus(UserType.INDIVIDUAL, status)
                     : userRepository.findByUserType(UserType.INDIVIDUAL);
             
-            return inds.stream()
+            List<UserDetailsResponse> list = inds.stream()
                     .filter(u -> {
                         if ("SUPER_ADMIN".equalsIgnoreCase(u.getRole()) || "ADMIN".equalsIgnoreCase(u.getRole())) {
                             return false;
@@ -115,6 +130,9 @@ public class AdminServiceImpl implements AdminService {
                     })
                     .map(this::mapToUserDetailsResponse)
                     .collect(Collectors.toList());
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), list.size());
+            return new PageImpl<>(start <= end ? list.subList(start, end) : List.of(), pageable, list.size());
         } else if ("VENDOR_ADMIN".equalsIgnoreCase(caller.getRole())) {
             if (caller.getOrganizationDetails() == null) {
                 throw new RuntimeException("Vendor admin not linked to an organization");
@@ -123,16 +141,20 @@ public class AdminServiceImpl implements AdminService {
             List<IndividualDetails> individuals = status != null
                     ? individualRepo.findByOrganizationDetailsIdAndCompanyApprovalStatus(orgId, status)
                     : individualRepo.findByOrganizationDetailsId(orgId);
-            return individuals.stream()
+            List<UserDetailsResponse> list = individuals.stream()
                     .map(ind -> mapToUserDetailsResponse(ind.getUser()))
                     .collect(Collectors.toList());
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), list.size());
+            return new PageImpl<>(start <= end ? list.subList(start, end) : List.of(), pageable, list.size());
         }
         throw new AccessDeniedException("You do not have permission to list individuals");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<CompanyDetailsResponse> getOrganizationsByRoleAndStatus(Long callerId, ApprovalStatus status) {
+    public Page<CompanyDetailsResponse> getOrganizationsByRoleAndStatus(Long callerId, ApprovalStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
         User caller = userRepository.findById(callerId)
                 .orElseThrow(() -> new UserNotFoundException("Caller not found"));
 
@@ -141,10 +163,12 @@ public class AdminServiceImpl implements AdminService {
                 : organizationRepo.findAll();
 
         if ("SUPER_ADMIN".equalsIgnoreCase(caller.getRole())) {
-            return orgs.stream().map(this::mapToCompanyDetailsResponse).collect(Collectors.toList());
+            List<CompanyDetailsResponse> list = orgs.stream().map(this::mapToCompanyDetailsResponse).collect(Collectors.toList());
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), list.size());
+            return new PageImpl<>(start <= end ? list.subList(start, end) : List.of(), pageable, list.size());
         } else if ("ADMIN".equalsIgnoreCase(caller.getRole())) {
-            // Platform Admin sees ALL vendor organizations for management/approval
-            return orgs.stream()
+            List<CompanyDetailsResponse> list = orgs.stream()
                     .filter(org -> {
                         User orgUser = userRepository.findByUserType(UserType.ORGANIZATION).stream()
                                 .filter(u -> u.getOrganizationDetails() != null && u.getOrganizationDetails().getId().equals(org.getId()))
@@ -154,6 +178,9 @@ public class AdminServiceImpl implements AdminService {
                     })
                     .map(this::mapToCompanyDetailsResponse)
                     .collect(Collectors.toList());
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), list.size());
+            return new PageImpl<>(start <= end ? list.subList(start, end) : List.of(), pageable, list.size());
         }
         throw new AccessDeniedException("You do not have permission to list organizations");
     }

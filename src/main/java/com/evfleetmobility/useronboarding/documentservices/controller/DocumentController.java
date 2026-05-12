@@ -31,9 +31,12 @@ public class DocumentController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<List<DocumentResponse>>> getMyDocuments(Principal principal) {
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<DocumentResponse>>> getMyDocuments(
+            Principal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         Long userId = Long.valueOf(principal.getName());
-        List<DocumentResponse> response = documentService.getMyDocuments(userId);
+        org.springframework.data.domain.Page<DocumentResponse> response = documentService.getMyDocuments(userId, page, size);
         return ResponseEntity.ok(new ApiResponse<>("Fetched documents successfully", response));
     }
 

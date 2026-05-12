@@ -8,6 +8,8 @@ import com.evfleetmobility.useronboarding.profileservices.entity.OrganizationDet
 import com.evfleetmobility.complaintresolution.complaint.repository.ComplaintRepository;
 import com.evfleetmobility.useronboarding.profileservices.repository.OrganizationRepository;
 import com.evfleetmobility.useronboarding.authservices.entity.ApprovalStatus;
+import com.evfleetmobility.useronboarding.vehicleservices.entity.VehicleStatus;
+import com.evfleetmobility.useronboarding.vehicleservices.repository.VehicleRepository;
 
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.task.Task;
@@ -16,6 +18,10 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -36,6 +42,9 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private VehicleRepository vehicleRepository;
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -247,6 +256,13 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
 
         complaint.setStatus("ASSIGNED_TO_VENDOR");
 
+        if (complaint.getVehicleId() != null) {
+            vehicleRepository.findById(Long.parseLong(complaint.getVehicleId())).ifPresent(vehicle -> {
+                vehicle.setStatus(VehicleStatus.INACTIVE);
+                vehicleRepository.save(vehicle);
+            });
+        }
+
         complaint.addWorkHistory(
                 "Vendor Assigned",
                 selectedVendor.getCompanyName()
@@ -323,24 +339,15 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
     // =========================
 
     @Override
-    public List<VendorDTO> getAllVendors() {
-
-        return organizationRepo.findAll()
-                .stream()
-                .map(this::mapToDTO)
-                .toList();
+    public Page<VendorDTO> getAllVendors(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return organizationRepo.findAll(pageable).map(this::mapToDTO);
     }
 
     @Override
-    public List<VendorDTO> getApprovedVendors() {
-
-        return organizationRepo
-                .findByApprovalStatus(
-                        ApprovalStatus.APPROVED
-                )
-                .stream()
-                .map(this::mapToDTO)
-                .toList();
+    public Page<VendorDTO> getApprovedVendors(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return organizationRepo.findByApprovalStatus(ApprovalStatus.APPROVED, pageable).map(this::mapToDTO);
     }
 
     @Override
@@ -358,37 +365,21 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
     }
 
     @Override
-    public List<VendorDTO> getAvailableVendors() {
-
-        return organizationRepo
-                .findByApprovalStatusAndVendorAvailabilityTrue(
-                        ApprovalStatus.APPROVED
-                )
-                .stream()
-                .map(this::mapToDTO)
-                .toList();
+    public Page<VendorDTO> getAvailableVendors(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return organizationRepo.findByApprovalStatusAndVendorAvailabilityTrue(ApprovalStatus.APPROVED, pageable).map(this::mapToDTO);
     }
 
     @Override
-    public List<VendorDTO> getVendorsByExpertise(
-            String expertise) {
-
-        return organizationRepo
-                .findByExpertiseIgnoreCase(expertise)
-                .stream()
-                .map(this::mapToDTO)
-                .toList();
+    public Page<VendorDTO> getVendorsByExpertise(String expertise, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return organizationRepo.findByExpertiseIgnoreCase(expertise, pageable).map(this::mapToDTO);
     }
 
     @Override
-    public List<VendorDTO> getVendorsByAvailability(
-            Boolean availability) {
-
-        return organizationRepo
-                .findByVendorAvailability(availability)
-                .stream()
-                .map(this::mapToDTO)
-                .toList();
+    public Page<VendorDTO> getVendorsByAvailability(Boolean availability, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return organizationRepo.findByVendorAvailability(availability, pageable).map(this::mapToDTO);
     }
 
     // =========================
@@ -396,13 +387,9 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
     // =========================
 
     @Override
-    public List<Complaint> getAssignedComplaints(
-            Long vendorId) {
-
-        return complaintRepository
-                .findByVendorIdOrderByCreatedAtDesc(
-                        vendorId
-                );
+    public Page<Complaint> getAssignedComplaints(Long vendorId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return complaintRepository.findByVendorIdOrderByCreatedAtDesc(vendorId, pageable);
     }
 
     @Override
@@ -489,6 +476,13 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 complaint.getAssignedTeam();
 
         if (Boolean.TRUE.equals(resolved)) {
+
+            if (complaint.getVehicleId() != null) {
+                vehicleRepository.findById(Long.parseLong(complaint.getVehicleId())).ifPresent(vehicle -> {
+                    vehicle.setStatus(VehicleStatus.ACTIVE);
+                    vehicleRepository.save(vehicle);
+                });
+            }
 
             complaint.setStatus("RESOLVED");
 

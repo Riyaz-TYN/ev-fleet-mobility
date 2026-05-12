@@ -25,7 +25,7 @@ public class VendorDashboardServiceImpl implements VendorDashboardService {
         OrganizationDetails vendor = organizationRepository.findById(vendorId)
                 .orElseThrow(() -> new RuntimeException("Vendor not found with ID: " + vendorId));
 
-        List<Complaint> vendorComplaints = complaintRepository.findByVendorIdOrderByCreatedAtDesc(vendorId);
+        List<Complaint> vendorComplaints = complaintRepository.findByVendorId(vendorId);
 
         long totalHandled = vendorComplaints.size();
         long resolved = vendorComplaints.stream().filter(c -> "RESOLVED".equalsIgnoreCase(c.getStatus())).count();

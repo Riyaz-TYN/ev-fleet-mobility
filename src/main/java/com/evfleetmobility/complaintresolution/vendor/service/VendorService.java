@@ -5,6 +5,7 @@ import com.evfleetmobility.complaintresolution.vendor.dto.VendorDTO;
 
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 
+import org.springframework.data.domain.Page;
 import java.util.List;
 
 public interface VendorService {
@@ -12,23 +13,23 @@ public interface VendorService {
     void execute(DelegateExecution execution);
 
    
-    List<VendorDTO> getAllVendors();
+    Page<VendorDTO> getAllVendors(int page, int size);
 
-    List<VendorDTO> getApprovedVendors();
+    Page<VendorDTO> getApprovedVendors(int page, int size);
 
    
     VendorDTO getVendorById(Long id);
 
    
-    List<VendorDTO> getAvailableVendors();
+    Page<VendorDTO> getAvailableVendors(int page, int size);
 
  
-    List<VendorDTO> getVendorsByExpertise(String expertise);
+    Page<VendorDTO> getVendorsByExpertise(String expertise, int page, int size);
 
   
-    List<VendorDTO> getVendorsByAvailability(Boolean availability);
+    Page<VendorDTO> getVendorsByAvailability(Boolean availability, int page, int size);
 
-    List<Complaint> getAssignedComplaints(Long vendorId);
+    Page<Complaint> getAssignedComplaints(Long vendorId, int page, int size);
 
 
     String updateComplaintStatus(

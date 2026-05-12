@@ -37,8 +37,11 @@ public class ServiceHistoryController {
     }
 
     @GetMapping("/vehicle/{vehicleId}")
-    public ResponseEntity<ApiResponse<List<ServiceHistoryResponse>>> getHistoryByVehicleId(@PathVariable Long vehicleId) {
-        return ResponseEntity.ok(new ApiResponse<>("Service history fetched successfully", serviceHistoryService.getHistoryByVehicleId(vehicleId)));
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<ServiceHistoryResponse>>> getHistoryByVehicleId(
+            @PathVariable Long vehicleId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(new ApiResponse<>("Service history fetched successfully", serviceHistoryService.getHistoryByVehicleId(vehicleId, page, size)));
     }
 
     @GetMapping("/vehicle/{vehicleId}/cost")

@@ -3,6 +3,7 @@ package com.evfleetmobility.useronboarding.vehicleservices.service;
 import com.evfleetmobility.useronboarding.vehicleservices.dto.VehicleRequest;
 import com.evfleetmobility.useronboarding.vehicleservices.dto.VehicleResponse;
 
+import org.springframework.data.domain.Page;
 import java.util.List;
 
 public interface VehicleService {
@@ -14,5 +15,5 @@ public interface VehicleService {
 
     VehicleResponse getVehicleById(Long vehicleId);
 
-    List<VehicleResponse> getAllVehicles();
+    Page<VehicleResponse> getAllVehicles(int page, int size);
 }

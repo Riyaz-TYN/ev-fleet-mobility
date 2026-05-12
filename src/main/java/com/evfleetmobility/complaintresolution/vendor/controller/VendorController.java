@@ -8,6 +8,7 @@ import com.evfleetmobility.complaintresolution.vendor.service.VendorService;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -21,24 +22,28 @@ public class VendorController {
         this.vendorService = vendorService;
     }
 
-   
     @GetMapping
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<VendorDTO> getAllVendors() {
-        return vendorService.getAllVendors();
+    public ResponseEntity<?> getAllVendors(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(vendorService.getAllVendors(page, size));
     }
 
     @GetMapping("/approved")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<VendorDTO> getApprovedVendors() {
-        return vendorService.getApprovedVendors();
+    public ResponseEntity<?> getApprovedVendors(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(vendorService.getApprovedVendors(page, size));
     }
 
-   
     @GetMapping("/available")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<VendorDTO> getAvailableVendors() {
-        return vendorService.getAvailableVendors();
+    public ResponseEntity<?> getAvailableVendors(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(vendorService.getAvailableVendors(page, size));
     }
 
     @PostMapping("/details")
@@ -54,22 +59,25 @@ public class VendorController {
     
     @PostMapping("/expertise")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<VendorDTO> getVendorsByExpertise(
-            @RequestBody VendorExpertiseRequestDTO request) {
+    public ResponseEntity<?> getVendorsByExpertise(
+            @RequestBody VendorExpertiseRequestDTO request,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        return vendorService.getVendorsByExpertise(
-                request.getExpertise()
-        );
+        return ResponseEntity.ok(vendorService.getVendorsByExpertise(
+                request.getExpertise(), page, size
+        ));
     }
 
-   
     @PostMapping("/availability")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<VendorDTO> getVendorsByAvailability(
-            @RequestBody VendorAvailabilityRequestDTO request) {
+    public ResponseEntity<?> getVendorsByAvailability(
+            @RequestBody VendorAvailabilityRequestDTO request,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        return vendorService.getVendorsByAvailability(
-                request.getAvailability()
-        );
+        return ResponseEntity.ok(vendorService.getVendorsByAvailability(
+                request.getAvailability(), page, size
+        ));
     }
 }

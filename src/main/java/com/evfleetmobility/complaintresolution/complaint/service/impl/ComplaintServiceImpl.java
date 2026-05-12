@@ -20,6 +20,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.camunda.bpm.engine.RuntimeService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -109,11 +112,11 @@ public class ComplaintServiceImpl implements ComplaintService {
                 });
             }
 
-            var vehicle = vehicleRepository
-                    .findByUserId(userId)
-                    .orElseThrow(() ->
-                            new RuntimeException("No vehicle found for this user")
-                    );
+            var vehicles = vehicleRepository.findByUserId(userId);
+            if (vehicles.isEmpty()) {
+                throw new RuntimeException("No vehicle found for this user");
+            }
+            var vehicle = vehicles.get(0);
 
             String vehicleId = vehicle.getId().toString();
 
@@ -196,29 +199,28 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public List<Complaint> getComplaints() {
+    public Page<Complaint> getComplaints(int page, int size) {
         String role = authContextService.getCurrentRole();
-
         Long currentUserId = authContextService.getCurrentUserId();
+        Pageable pageable = PageRequest.of(page, size);
 
         if ("DRIVER".equalsIgnoreCase(role)) {
-
-            return complaintRepository.findByCustomerIdOrderByCreatedAtDesc(String.valueOf(currentUserId));
+            return complaintRepository.findByCustomerIdOrderByCreatedAtDesc(String.valueOf(currentUserId), pageable);
         }
 
         if ("VENDOR_ADMIN".equalsIgnoreCase(role) || "VENDOR".equalsIgnoreCase(role)) {
             return userRepository.findById(currentUserId)
                     .filter(u -> u.getOrganizationDetails() != null)
                     .map(u -> complaintRepository.findByVendorIdOrderByCreatedAtDesc(
-                            u.getOrganizationDetails().getId()))
-                    .orElse(java.util.List.of());
+                            u.getOrganizationDetails().getId(), pageable))
+                    .orElse(Page.empty(pageable));
         }
 
         if ("MANAGER".equalsIgnoreCase(role)) {
-            return complaintRepository.findByStatusOrderByCreatedAtDesc("ESCALATED_TO_MANAGER");
+            return complaintRepository.findByStatusOrderByCreatedAtDesc("ESCALATED_TO_MANAGER", pageable);
         }
 
-        return complaintRepository.findAll();
+        return complaintRepository.findAll(pageable);
     }
 
     @Override
@@ -228,18 +230,20 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public List<Complaint> getComplaintsByVehicle(String vehicleId) {
-        return complaintRepository.findByVehicleIdOrderByCreatedAtDesc(vehicleId);
+    public Page<Complaint> getComplaintsByVehicle(String vehicleId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return complaintRepository.findByVehicleIdOrderByCreatedAtDesc(vehicleId, pageable);
     }
 
     @Override
-    public List<Complaint> getComplaintStatus(String status) {
-        return complaintRepository.findByStatusOrderByCreatedAtDesc(status);
+    public Page<Complaint> getComplaintStatus(String status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return complaintRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
     }
 
     @Override
     public List<Complaint> getAssignedComplaintsByVendorId(Long vendorId) {
-        return vendorService.getAssignedComplaints(vendorId);
+        return vendorService.getAssignedComplaints(vendorId, 0, Integer.MAX_VALUE).getContent();
     }
 
     @Override
@@ -286,18 +290,21 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public List<Complaint> getMyComplaints(String customerId) {
-        return complaintRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
+    public Page<Complaint> getMyComplaints(String customerId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return complaintRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable);
     }
 
     @Override
-    public List<Complaint> getComplaintsByVehicleId(String vehicleId) {
-        return complaintRepository.findByVehicleIdOrderByCreatedAtDesc(vehicleId);
+    public Page<Complaint> getComplaintsByVehicleId(String vehicleId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return complaintRepository.findByVehicleIdOrderByCreatedAtDesc(vehicleId, pageable);
     }
 
     @Override
-    public List<Complaint> getAllComplaints() {
-        return complaintRepository.findAll();
+    public Page<Complaint> getAllComplaints(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return complaintRepository.findAll(pageable);
     }
 
     @Override
@@ -306,13 +313,15 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
-    public List<Complaint> getComplaintsByStatus(String status) {
-        return complaintRepository.findByStatusOrderByCreatedAtDesc(status);
+    public Page<Complaint> getComplaintsByStatus(String status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return complaintRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
     }
 
     @Override
-    public List<Complaint> getComplaintsByPriority(String priority) {
-        return complaintRepository.findByPriorityOrderByCreatedAtDesc(priority);
+    public Page<Complaint> getComplaintsByPriority(String priority, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return complaintRepository.findByPriorityOrderByCreatedAtDesc(priority, pageable);
     }
 
     @Override

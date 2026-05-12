@@ -31,6 +31,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -66,14 +69,13 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public List<DocumentResponse> getMyDocuments(Long userId) {
+    public Page<DocumentResponse> getMyDocuments(Long userId, int page, int size) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        return documentRepository.findByUserId(user.getId())
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(page, size);
+        return documentRepository.findByUserId(user.getId(), pageable)
+                .map(this::mapToResponse);
     }
 
     @Override

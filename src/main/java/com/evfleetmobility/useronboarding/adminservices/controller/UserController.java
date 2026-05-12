@@ -11,7 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/users")
@@ -22,32 +22,38 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'VENDOR_ADMIN')")
-    public ResponseEntity<ApiResponse<List<UserDetailsResponse>>> getUsers(
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<UserDetailsResponse>>> getUsers(
             Principal principal,
-            @RequestParam(required = false) ApprovalStatus status) {
+            @RequestParam(required = false) ApprovalStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         Long callerId = Long.valueOf(principal.getName());
         return ResponseEntity.ok(new ApiResponse<>("Users fetched successfully",
-                adminService.getUsersByRoleAndStatus(callerId, status)));
+                adminService.getUsersByRoleAndStatus(callerId, status, page, size)));
     }
 
     @GetMapping("/organizations")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public ResponseEntity<ApiResponse<List<CompanyDetailsResponse>>> getOrganizations(
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<CompanyDetailsResponse>>> getOrganizations(
             Principal principal,
-            @RequestParam(required = false) ApprovalStatus status) {
+            @RequestParam(required = false) ApprovalStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         Long callerId = Long.valueOf(principal.getName());
         return ResponseEntity.ok(new ApiResponse<>("Organizations fetched successfully",
-                adminService.getOrganizationsByRoleAndStatus(callerId, status)));
+                adminService.getOrganizationsByRoleAndStatus(callerId, status, page, size)));
     }
 
     @GetMapping("/individuals")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'VENDOR_ADMIN')")
-    public ResponseEntity<ApiResponse<List<UserDetailsResponse>>> getIndividuals(
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<UserDetailsResponse>>> getIndividuals(
             Principal principal,
-            @RequestParam(required = false) ApprovalStatus status) {
+            @RequestParam(required = false) ApprovalStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         Long callerId = Long.valueOf(principal.getName());
         return ResponseEntity.ok(new ApiResponse<>("Individuals fetched successfully",
-                adminService.getIndividualsByRoleAndStatus(callerId, status)));
+                adminService.getIndividualsByRoleAndStatus(callerId, status, page, size)));
     }
 
     @PutMapping("/assign-vehicle")

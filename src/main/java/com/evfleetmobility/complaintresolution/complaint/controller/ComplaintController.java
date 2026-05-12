@@ -51,8 +51,10 @@ public class ComplaintController {
 
         @GetMapping
         @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
-        public ResponseEntity<?> getComplaints() {
-                return ResponseEntity.ok(complaintService.getComplaints());
+        public ResponseEntity<?> getComplaints(
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size) {
+                return ResponseEntity.ok(complaintService.getComplaints(page, size));
         }
 
         @PostMapping("/details")
@@ -74,17 +76,21 @@ public class ComplaintController {
         @PostMapping("/filter/status")
         @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
         public ResponseEntity<?> getComplaintsByStatus(
-                        @RequestBody ComplaintStatusRequestDTO request) {
+                        @RequestBody ComplaintStatusRequestDTO request,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size) {
                 return ResponseEntity.ok(
-                                complaintService.getComplaintStatus(request.getStatus()));
+                                complaintService.getComplaintStatus(request.getStatus(), page, size));
         }
 
         @PostMapping("/filter/vehicle")
         @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
         public ResponseEntity<?> getComplaintsByVehicle(
-                        @RequestBody VehicleComplaintRequestDTO request) {
+                        @RequestBody VehicleComplaintRequestDTO request,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size) {
                 return ResponseEntity.ok(
-                                complaintService.getComplaintsByVehicle(request.getVehicleId()));
+                                complaintService.getComplaintsByVehicle(request.getVehicleId(), page, size));
         }
 
         @PostMapping("/audit-logs")

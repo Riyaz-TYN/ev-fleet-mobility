@@ -47,8 +47,10 @@ public class VehicleController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'DRIVER', 'MANAGER', 'VENDOR_ADMIN')")
-    public ResponseEntity<ApiResponse<List<VehicleResponse>>> getAllVehicles() {
-        return ResponseEntity.ok(new ApiResponse<>("Vehicles fetched successfully", vehicleService.getAllVehicles()));
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<VehicleResponse>>> getAllVehicles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(new ApiResponse<>("Vehicles fetched successfully", vehicleService.getAllVehicles(page, size)));
     }
     
 
