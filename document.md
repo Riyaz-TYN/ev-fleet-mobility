@@ -22,6 +22,17 @@ http://localhost:8080
 Register a new user. Auto-creates `IndividualDetails` or `OrganizationDetails` based on `userType`.
 - **Auth:** Public
 - **Validation:** `fullName`, `email`, `password` (min 6 chars), `companyName` are `@NotBlank`.
+- **Response:**
+```json
+{
+  "message": "Signup successful",
+  "data": {
+    "fullName": "John Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
 
 
 ### Core Modules:
@@ -90,7 +101,17 @@ Used when a company account is being created.
   "password": "password123"
 }
 ```
-- **Response**: Returns `accessToken` and `refreshToken`.
+- **Response**:
+```json
+{
+  "message": "Login successful",
+  "data": {
+    "accessToken": "eyJhbGci...",
+    "refreshToken": "eyJhbGci..."
+  }
+}
+```
+
 
 ---
 
@@ -110,6 +131,15 @@ Used when a company account is being created.
 | `panNumber` | Text | Tax ID |
 | `panCardFile` | File | Image/PDF of PAN card (stored as BYTEA) |
 | `latitude` / `longitude` | Double |User location  |
+
+- **Response:**
+```json
+{
+  "message": "Profile updated successfully",
+  "data": null
+}
+```
+
 
 #### **Fields for Organization (Vendor/Admin)**
 *Note: Basic info (Company Name, Email) is already captured during signup.*
@@ -135,6 +165,14 @@ Used when a company account is being created.
   "status": "APPROVED"
 }
 ```
+- **Response:**
+```json
+{
+  "message": "Status updated successfully",
+  "data": "Success"
+}
+```
+
 *Note: `VENDOR_ADMIN` can only approve individuals linked to their own organization.*
 
 ---
@@ -156,11 +194,20 @@ Used when a company account is being created.
   "longitude": 77.2090
 }
 ```
+- **Response:**
+```json
+{
+  "message": "Complaint raised successfully. AI is analyzing...",
+  "payloadSentToAI": { ... original request ... }
+}
+```
+
 
 ### **Step 2: AI & User Interaction**
 The system automatically triggers AI analysis. The driver then interacts with the workflow:
-- **Endpoint**: `POST /api/workflow/user-response`
 - **Variables**: `resolved` (bool), `continueAi` (bool), `userFollowUp` (string).
+- **Response:** `User response submitted successfully` (Plain Text)
+
 
 ### **Step 3: Vendor Assignment (Automated or Manual)**
 - **Endpoint**: `PUT /api/complaints/assign` (Manual override by Manager)
@@ -176,6 +223,8 @@ The system automatically triggers AI analysis. The driver then interacts with th
 - **Update Status**: `PUT /api/complaints/status` (e.g., `IN_REPAIR`, `RESOLVED`)
 - **Resolve Endpoint**: `PUT /api/complaints/resolve`
 - **Body**: `{"complaintId": 1, "resolved": true, "remarks": "Replaced cable"}`
+- **Response:** `Complaint resolved successfully` (Plain Text)
+
 
 ---
 
@@ -205,20 +254,77 @@ The system automatically triggers AI analysis. The driver then interacts with th
 - **Auth:** `SUPER_ADMIN`, `ADMIN`, `VENDOR_ADMIN`
 - **Query Param:** `?status=PENDING` (optional — `PENDING` | `APPROVED` | `REJECTED`)
 - `VENDOR_ADMIN` sees only users within their own organization.
+- **Response:**
+```json
+{
+  "message": "Users fetched successfully",
+  "data": [
+    {
+      "id": 1,
+      "email": "user@example.com",
+      "role": "DRIVER",
+      "userType": "INDIVIDUAL",
+      "approvalStatus": "APPROVED",
+      "companyName": "Alpha Fleet"
+    }
+  ]
+}
+```
+
 
 ### GET `/api/users/organizations` — List Organizations
 - **Auth:** `SUPER_ADMIN`, `ADMIN`
 - **Query Param:** `?status=APPROVED` (optional)
+- **Response:**
+```json
+{
+  "message": "Organizations fetched successfully",
+  "data": [
+    {
+      "id": 10,
+      "companyName": "EV Service Solutions",
+      "email": "admin@ev-service.com",
+      "approvalStatus": "APPROVED"
+    }
+  ]
+}
+```
+
 
 ### GET `/api/users/individuals` — List Individual Users
 - **Auth:** `SUPER_ADMIN`, `ADMIN`, `VENDOR_ADMIN`
 - **Query Param:** `?status=PENDING` (optional)
+- **Response:**
+```json
+{
+  "message": "Individuals fetched successfully",
+  "data": [
+    {
+      "id": 5,
+      "email": "driver@alpha.com",
+      "role": "DRIVER",
+      "userType": "INDIVIDUAL",
+      "approvalStatus": "PENDING",
+      "companyName": "Alpha Fleet"
+    }
+  ]
+}
+```
+
 
 ### PUT `/api/users/assign-vehicle` — Assign Vehicle to Driver
 - **Auth:** `SUPER_ADMIN`, `ADMIN`, `VENDOR_ADMIN`
 ```json
 { "vehicleId": 5, "driverId": 12 }
 ```
+- **Response:**
+```json
+{
+  "message": "Driver assigned to vehicle successfully",
+  "data": null
+}
+```
+
 ---
 
 ## 9. Admin — Status  —  `/api/status`
@@ -233,6 +339,14 @@ The system automatically triggers AI analysis. The driver then interacts with th
 }
 ```
 - `status`: `PENDING` | `APPROVED` | `REJECTED`
+- **Response:**
+```json
+{
+  "message": "Status updated successfully",
+  "data": "Success"
+}
+```
+
 
 ---
 
@@ -254,9 +368,32 @@ The system automatically triggers AI analysis. The driver then interacts with th
 
 ### GET `/api/documents/my` — Get My Documents
 - **Auth:** Any authenticated user
+- **Response:**
+```json
+{
+  "message": "Fetched documents successfully",
+  "data": [
+    {
+      "id": 1,
+      "documentType": "GSTIN",
+      "fileUrl": "...",
+      "status": "APPROVED"
+    }
+  ]
+}
+```
+
 
 ### GET `/api/documents/presign/{documentId}` — Generate Pre-signed URL
 - Returns a time-limited S3 URL (valid 15 minutes).
+- **Response:**
+```json
+{
+  "message": "Pre-signed URL generated (valid 15 minutes)",
+  "data": "https://s3.amazonaws.com/ev-fleet-docs/..."
+}
+```
+
 
 ### GET `/api/documents/download/pan` — Download Own PAN Card
 - **Note:** PAN cards are stored as `BYTEA` in PostgreSQL (not S3).
@@ -264,6 +401,8 @@ The system automatically triggers AI analysis. The driver then interacts with th
 
 ### GET `/api/documents/download/pan/{targetUserId}` — Download PAN Card (Admin)
 - Download any user's PAN card for verification purposes.
+- **Response:** Raw binary bytes with `Content-Type` header (image/jpeg, application/pdf, etc.).
+
 
 ---
 
@@ -286,16 +425,77 @@ The system automatically triggers AI analysis. The driver then interacts with th
 ```
 - `userId` is **optional** — vehicles can be registered without an assigned driver.
 - `status`: `AVAILABLE` | `ACTIVE` | `INACTIVE` | `UNDER_MAINTENANCE` | `DECOMMISSIONED`
+- **Response:**
+```json
+{
+  "message": "Vehicle added successfully",
+  "data": {
+    "id": 5,
+    "make": "Tata",
+    "model": "Nexon EV",
+    "licensePlate": "KA01AB1234",
+    "status": "AVAILABLE"
+  }
+}
+```
+
 
 ### PUT `/api/vehicles/{id}` — Update Vehicle  (same body as POST)
+- **Response:**
+```json
+{
+  "message": "Vehicle updated successfully",
+  "data": {
+    "id": 5,
+    "status": "ACTIVE"
+  }
+}
+```
+
 ### DELETE `/api/vehicles/{id}` — Delete Vehicle
+- **Response:**
+```json
+{
+  "message": "Vehicle deleted successfully",
+  "data": null
+}
+```
+
 ### GET `/api/vehicles/{id}` — Get Vehicle by ID
 - **Auth:** `ADMIN`, `SUPER_ADMIN`, `DRIVER`, `MANAGER`, `VENDOR_ADMIN`
-- **Response:** `VehicleResponse` object.
+- **Response:**
+```json
+{
+  "message": "Vehicle fetched successfully",
+  "data": {
+    "id": 5,
+    "make": "Tata",
+    "model": "Nexon EV",
+    "licensePlate": "KA01AB1234",
+    "vin": "...",
+    "status": "AVAILABLE"
+  }
+}
+```
+
 
 ### GET `/api/vehicles` — Get All Vehicles
 - **Auth:** `ADMIN`, `SUPER_ADMIN`, `DRIVER`, `MANAGER`, `VENDOR_ADMIN`
-- **Response:** `List<VehicleResponse>`
+- **Response:**
+```json
+{
+  "message": "Vehicles fetched successfully",
+  "data": [
+    {
+      "id": 5,
+      "make": "Tata",
+      "model": "Nexon EV",
+      "status": "AVAILABLE"
+    }
+  ]
+}
+```
+
 
 #### **VehicleResponse DTO**
 | Field | Type | Description |
@@ -326,36 +526,109 @@ The system automatically triggers AI analysis. The driver then interacts with th
 }
 ```
 - `serviceType`: `ROUTINE_MAINTENANCE` | `BATTERY_SERVICE` | `BATTERY_CHECK` | `TIRE_REPLACEMENT` | `BRAKE_SERVICE` | `SOFTWARE_UPDATE` | `INSPECTION` | `REPAIR` | `EMERGENCY_SERVICE` | `OTHER`
+- **Response:**
+```json
+{
+  "message": "Service entry added successfully",
+  "data": {
+    "id": 1,
+    "vehicleId": 5,
+    "serviceDate": "2024-11-15",
+    "cost": 45000.00
+  }
+}
+```
+
 
 ### PUT `/api/service-history/{id}` — Update Entry
+- **Response:**
+```json
+{
+  "message": "Service entry updated successfully",
+  "data": { "id": 1, "cost": 46000.00 }
+}
+```
+
 ### DELETE `/api/service-history/{id}` — Delete Entry
+- **Response:**
+```json
+{
+  "message": "Service entry deleted successfully",
+  "data": null
+}
+```
+
 ### GET `/api/service-history/vehicle/{vehicleId}` — Full Service History
+- **Response:**
+```json
+{
+  "message": "Service history fetched successfully",
+  "data": [
+    { "id": 1, "serviceDate": "2024-11-15", "serviceType": "BATTERY_SERVICE" }
+  ]
+}
+```
+
 ### GET `/api/service-history/vehicle/{vehicleId}/cost` — Total Maintenance Cost (returns `BigDecimal`)
+- **Response:**
+```json
+{
+  "message": "Total cost fetched successfully",
+  "data": 45000.00
+}
+```
+
 ### GET `/api/service-history/vehicle/{vehicleId}/odometer` — Latest Odometer Reading (returns `Long`)
+- **Response:**
+```json
+{
+  "message": "Latest odometer fetched successfully",
+  "data": 24500
+}
+```
+
 
 ---
 
 ## 13. All Complaint Endpoints — Quick Reference  —  `/api/complaints`
 
-| Method | Endpoint | Auth Roles | Body / Params |
-|---|---|---|---|
-| `POST` | `/api/complaints` | `DRIVER` | `{ complaintData{}, latitude, longitude }` |
-| `GET` | `/api/complaints` | All | — (role-filtered) |
-| `POST` | `/api/complaints/details` | All | `{ complaintId }` |
-| `POST` | `/api/complaints/filter/status` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ status }` |
-| `POST` | `/api/complaints/filter/vehicle` | `VENDOR_ADMIN`, `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ vehicleId }` |
-| `POST` | `/api/complaints/audit-logs` | `ADMIN`, `SUPER_ADMIN` | `{ complaintId }` |
-| `POST` | `/api/complaints/assigned` | `VENDOR_ADMIN`, `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ vendorId }` |
-| `PUT` | `/api/complaints/status` | `VENDOR_ADMIN`, `MANAGER` | `{ complaintId, status }` |
-| `PUT` | `/api/complaints/resolve` | `VENDOR_ADMIN`, `MANAGER` | `{ complaintId, resolved, resolutionRemarks }` |
-| `PUT` | `/api/complaints/assign` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ complaintId, vendorId }` |
-| `PUT` | `/api/complaints/reject` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ complaintId }` |
-| `PUT` | `/api/complaints/decision` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ complaintId, managerDecision, remarks }` |
-| `GET` | `/api/complaints/vendors` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | — |
-| `POST` | `/api/complaints/vendors/details` | `VENDOR_ADMIN`, `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ vendorId }` |
-| `POST` | `/api/complaints/{id}/nearby-vendors` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | path param |
-| `PUT` | `/api/complaints/reassign` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ complaintId, vendorId }` |
-| `PUT` | `/api/complaints/assign-technician` | `VENDOR_ADMIN`, `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ complaintId, technicianId }` |
+| Method | Endpoint | Auth Roles | Body / Params | Response Data |
+|---|---|---|---|---|
+| `POST` | `/api/complaints` | `DRIVER` | `{ complaintData{}, latitude, longitude }` | `Map<String, Object>` |
+| `GET` | `/api/complaints` | All | — (role-filtered) | `List<Complaint>` |
+| `POST` | `/api/complaints/details` | All | `{ complaintId }` | `Complaint` |
+| `POST` | `/api/complaints/filter/status` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ status }` | `List<Complaint>` |
+| `POST` | `/api/complaints/filter/vehicle` | `VENDOR_ADMIN`, `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ vehicleId }` | `List<Complaint>` |
+| `POST` | `/api/complaints/audit-logs` | `ADMIN`, `SUPER_ADMIN` | `{ complaintId }` | `List<AuditLog>` |
+| `POST` | `/api/complaints/assigned` | `VENDOR_ADMIN`, `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ vendorId }` | `List<Complaint>` |
+| `PUT` | `/api/complaints/status` | `VENDOR_ADMIN`, `MANAGER` | `{ complaintId, status }` | `String` (Success msg) |
+| `PUT` | `/api/complaints/resolve` | `VENDOR_ADMIN`, `MANAGER` | `{ complaintId, resolved, remarks }` | `String` (Success msg) |
+| `PUT` | `/api/complaints/assign` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ complaintId, vendorId }` | `Complaint` |
+| `PUT` | `/api/complaints/reject` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ complaintId }` | `Complaint` |
+| `PUT` | `/api/complaints/decision` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ complaintId, decision, remarks }` | `String` (Success msg) |
+| `GET` | `/api/complaints/vendors` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | — | `List<OrganizationDetails>` |
+| `POST` | `/api/complaints/vendors/details` | `VENDOR_ADMIN`, `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ vendorId }` | `OrganizationDetails` |
+| `POST` | `/api/complaints/{id}/nearby-vendors` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | path param | `List<VendorDTO>` |
+| `PUT` | `/api/complaints/reassign` | `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ complaintId, vendorId }` | `Complaint` |
+| `PUT` | `/api/complaints/assign-technician` | `VENDOR_ADMIN`, `MANAGER`, `ADMIN`, `SUPER_ADMIN` | `{ complaintId, technicianId }` | `Complaint` |
+
+#### **Example: Complaint Response**
+```json
+{
+  "id": 1,
+  "status": "ASSIGNED_TO_VENDOR",
+  "issueCategory": "BATTERY",
+  "priority": "HIGH",
+  "customerId": "1",
+  "vehicleId": "5",
+  "vendorId": 10,
+  "technicianId": null,
+  "latitude": 28.6139,
+  "longitude": 77.2090,
+  "workSummary": "2024-11-15: Complaint Raised\n2024-11-15: Vendor Assigned"
+}
+```
+
 
 **`managerDecision` values:** `RESOLVE` | `REJECT` | `RETRY`
 
@@ -386,6 +659,8 @@ Directly interact with Camunda task engine. `taskId` is optional — auto-looked
 ```json
 { "complaintId": 1, "taskId": null, "vendorResolved": true }
 ```
+- **Response:** `Vendor response submitted successfully` (Plain Text)
+
 - `vendorResolved: false` → escalates to Manager.
 
 ### POST `/api/workflow/manager-response`
@@ -393,6 +668,8 @@ Directly interact with Camunda task engine. `taskId` is optional — auto-looked
 ```json
 { "complaintId": 1, "taskId": null, "managerDecision": "RESOLVE" }
 ```
+- **Response:** `Manager response submitted successfully` (Plain Text)
+
 - `managerDecision`: `RESOLVE` | `REJECT` | `RETRY`
 
 ---
@@ -404,6 +681,16 @@ Used by the external FastAPI AI service to persist its queries and responses int
 ```json
 { "userId": 1, "vehicleId": "5", "vehicleModel": "Nexon EV", "question": "Battery not charging..." }
 ```
+- **Response:**
+```json
+{
+  "id": 1,
+  "userId": 1,
+  "question": "Battery not charging...",
+  "createdAt": "2024-11-15T10:00:00"
+}
+```
+
 
 ### POST `/api/ai/responses` — Save AI Response
 ```json
@@ -413,9 +700,24 @@ Used by the external FastAPI AI service to persist its queries and responses int
   "status": "RESOLVED", "title": "Battery Issue", "description": "..."
 }
 ```
+- **Response:**
+```json
+{
+  "id": 1,
+  "queryId": 1,
+  "answer": "Check the charging port...",
+  "confidence": 0.87,
+  "status": "RESOLVED"
+}
+```
+
 
 ### GET `/api/ai/queries/user/{userId}` — Queries by User
+- **Response:** `List<AIQuery>`
+
 ### GET `/api/ai/responses/query/{queryId}` — Responses for a Query
+- **Response:** `List<AIResponse>`
+
 
 ---
 
@@ -424,7 +726,19 @@ Used by the external FastAPI AI service to persist its queries and responses int
 ### GET `/api/config`
 Returns the dynamic field configuration for the complaint submission form.
 - **Auth:** All authenticated roles
-- **Response:** List of `FieldConfigDTO` — each item has field name, type, label, required flag, and allowed options.
+- **Response:**
+```json
+[
+  {
+    "fieldName": "issueCategory",
+    "label": "Issue Category",
+    "type": "select",
+    "required": true,
+    "options": ["BATTERY", "TIRE", "SOFTWARE"]
+  }
+]
+```
+
 
 ---
 
@@ -461,6 +775,8 @@ Returns the dynamic field configuration for the complaint submission form.
 
 ### GET `/api/users/individuals` — List Individuals
 - **Auth:** `ADMIN`, `SUPER_ADMIN`, `VENDOR_ADMIN`
+- **Response:** `List<UserDetailsResponse>`
+
 
 ### PUT `/api/users/assign-vehicle` — Assign Driver to Vehicle
 - **Auth:** `ADMIN`, `SUPER_ADMIN`, `VENDOR_ADMIN`
@@ -476,9 +792,12 @@ Returns the dynamic field configuration for the complaint submission form.
 
 ### GET `/api/vendors` — List All Vendors
 - **Auth:** `MANAGER`, `ADMIN`, `SUPER_ADMIN`
+- **Response:** `List<CompanyDetailsResponse>`
 
 ### GET `/api/vendors/available` — List Active/Available Vendors
 - **Auth:** `VENDOR_ADMIN`, `MANAGER`, `ADMIN`, `SUPER_ADMIN`
+- **Response:** `List<CompanyDetailsResponse>`
+
 
 ---
 
@@ -487,11 +806,15 @@ Returns the dynamic field configuration for the complaint submission form.
 
 ### POST `/api/audit-logs/complaint` — Logs by Complaint
 - **Body:** `{ "complaintId": 1 }`
+- **Response:** `List<AuditLog>`
 
 ### POST `/api/audit-logs/vehicle` — Logs by Vehicle
 - **Body:** `{ "vehicleId": "5" }`
+- **Response:** `List<AuditLog>`
 
 ### POST `/api/audit-logs/action` — Logs by Action Type
 - **Body:** `{ "action": "AI_ANALYZED" }`
+- **Response:** `List<AuditLog>`
+
 
 ---
