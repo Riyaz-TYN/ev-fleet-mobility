@@ -16,19 +16,19 @@ public class AuditLogServiceImpl implements AuditLogService {
     private final ObjectMapper objectMapper;
 
     public AuditLogServiceImpl(AuditLogRepository auditLogRepository,
-                           ObjectMapper objectMapper) {
+            ObjectMapper objectMapper) {
         this.auditLogRepository = auditLogRepository;
         this.objectMapper = objectMapper;
     }
 
     public void saveLog(Long complaintId,
-                        String vehicleId,
-                        String action,
-                        String performedBy,
-                        String previousStatus,
-                        String newStatus,
-                        String remarks,
-                        Map<String, Object> metadataMap) {
+            String vehicleId,
+            String action,
+            String performedBy,
+            String previousStatus,
+            String newStatus,
+            String remarks,
+            Map<String, Object> metadataMap) {
 
         try {
             String metadataJson = "{}";
@@ -45,8 +45,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                     previousStatus,
                     newStatus,
                     remarks,
-                    metadataJson
-            );
+                    metadataJson);
 
             auditLogRepository.save(auditLog);
 

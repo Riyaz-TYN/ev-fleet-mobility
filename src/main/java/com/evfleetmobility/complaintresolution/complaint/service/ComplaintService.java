@@ -44,5 +44,7 @@ public interface ComplaintService {
     List<Complaint> getComplaintsByPriority(String priority);
 
     Complaint assignTechnician(Long complaintId, Long technicianId);
+
+    List<com.evfleetmobility.complaintresolution.complaint.dto.AIReplyDTO> getAIChatHistory(Long complaintId);
 }
 

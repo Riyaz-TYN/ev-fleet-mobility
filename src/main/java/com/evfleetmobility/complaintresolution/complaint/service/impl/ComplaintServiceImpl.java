@@ -367,4 +367,35 @@ public class ComplaintServiceImpl implements ComplaintService {
 
         return complaintRepository.save(complaint);
     }
+
+    @Override
+    public List<com.evfleetmobility.complaintresolution.complaint.dto.AIReplyDTO> getAIChatHistory(Long complaintId) {
+        List<com.evfleetmobility.complaintresolution.auditlog.entity.AuditLog> logs = auditLogService.getLogsByComplaintId(complaintId);
+        List<com.evfleetmobility.complaintresolution.complaint.dto.AIReplyDTO> chatHistory = new java.util.ArrayList<>();
+        
+        for (com.evfleetmobility.complaintresolution.auditlog.entity.AuditLog log : logs) {
+            try {
+                String timestamp = log.getCreatedAt() != null ? log.getCreatedAt().toString() : "";
+
+                if ("USER_FOLLOWUP".equals(log.getAction())) {
+                    Map<String, Object> metadata = objectMapper.readValue(log.getMetadata(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+                    String message = metadata.containsKey("userMessage") ? metadata.get("userMessage").toString() : log.getRemarks();
+                    Integer attemptCount = metadata.containsKey("aiAttemptCount") ? Integer.valueOf(metadata.get("aiAttemptCount").toString()) : null;
+                    
+                    chatHistory.add(new com.evfleetmobility.complaintresolution.complaint.dto.AIReplyDTO("USER", message, null, timestamp, attemptCount));
+                } 
+                else if ("AI_ANALYZED".equals(log.getAction())) {
+                    Map<String, Object> metadata = objectMapper.readValue(log.getMetadata(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+                    String message = metadata.containsKey("suggestion") ? metadata.get("suggestion").toString() : "";
+                    Double confidence = metadata.containsKey("confidence") ? Double.valueOf(metadata.get("confidence").toString()) : 0.0;
+                    Integer attemptCount = metadata.containsKey("aiAttemptCount") ? Integer.valueOf(metadata.get("aiAttemptCount").toString()) : 0;
+                    
+                    chatHistory.add(new com.evfleetmobility.complaintresolution.complaint.dto.AIReplyDTO("AI", message, confidence, timestamp, attemptCount));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return chatHistory;
+    }
 }

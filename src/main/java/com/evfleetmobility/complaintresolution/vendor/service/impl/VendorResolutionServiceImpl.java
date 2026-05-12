@@ -51,7 +51,7 @@ public class VendorResolutionServiceImpl implements VendorResolutionService, Jav
             if (Boolean.TRUE.equals(vendorResolved)) {
                 complaint.setStatus("RESOLVED");
 
-                // ✅ Record which vendor resolved it in work summary
+               
                 complaint.addWorkHistory(
                     "Resolved by Vendor",
                     "Vendor: " + assignedVendor,
@@ -61,7 +61,7 @@ public class VendorResolutionServiceImpl implements VendorResolutionService, Jav
                 complaint.setAssignedTeam(assignedVendor);
                 complaintRepository.save(complaint);
 
-                // ✅ Audit log — who resolved it
+             
                 auditLogService.saveLog(
                         complaintId,
                         vehicleId != null ? vehicleId : complaint.getVehicleId(),
@@ -79,11 +79,11 @@ public class VendorResolutionServiceImpl implements VendorResolutionService, Jav
                 System.out.println("Vendor resolved -> DB updated. Vendor: " + assignedVendor);
 
             } else {
-                // Vendor could not resolve — this path feeds into EscalationServiceImpl
+              
                 complaint.setStatus("ESCALATED_TO_MANAGER");
                 complaint.setEscalationReason("Vendor could not resolve: " + assignedVendor);
 
-                // ✅ Record vendor unresolved in work summary
+             
                 complaint.addWorkHistory(
                     "Vendor Unresolved",
                     "Vendor: " + assignedVendor,
@@ -93,7 +93,7 @@ public class VendorResolutionServiceImpl implements VendorResolutionService, Jav
                 complaint.setAssignedTeam(assignedVendor);
                 complaintRepository.save(complaint);
 
-                // ✅ Audit log for vendor unresolved
+        
                 auditLogService.saveLog(
                         complaintId,
                         vehicleId != null ? vehicleId : complaint.getVehicleId(),

@@ -16,12 +16,14 @@ import java.util.Map;
 public class WorkflowController {
 
     private final TaskService taskService;
+    private final com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService auditLogService;
 
     @Autowired
     private ComplaintRepository complaintRepository;
 
-    public WorkflowController(TaskService taskService) {
+    public WorkflowController(TaskService taskService, com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService auditLogService) {
         this.taskService = taskService;
+        this.auditLogService = auditLogService;
     }
 
     @PostMapping("/user-response")
@@ -44,8 +46,24 @@ public class WorkflowController {
         Boolean resolved = request.getResolved() != null ? request.getResolved() : false;
         Boolean continueAi = request.getContinueAi() != null ? request.getContinueAi() : false;
 
-        // We set the escalation reason if the user is not satisfied, 
-        // but we leave the Work Summary for Vendor/Manager remarks.
+        if (Boolean.TRUE.equals(continueAi) && request.getUserFollowUp() != null && !request.getUserFollowUp().isBlank()) {
+            complaintRepository.findById(complaintId).ifPresent(complaint -> {
+                auditLogService.saveLog(
+                        complaintId,
+                        complaint.getVehicleId(),
+                        "USER_FOLLOWUP",
+                        "USER",
+                        null,
+                        null,
+                        "User replied to AI",
+                        Map.of(
+                                "userMessage", request.getUserFollowUp()
+                        )
+                );
+            });
+        } 
+        
+
         if (complaintId != null && !Boolean.TRUE.equals(resolved) && !Boolean.TRUE.equals(continueAi)) {
             complaintRepository.findById(complaintId).ifPresent(complaint -> {
                 complaint.setEscalationReason("User not satisfied with AI assistance.");
@@ -63,37 +81,8 @@ public class WorkflowController {
         return "User response submitted successfully";
     }
 
-    @Deprecated
-    @PostMapping("/user-response/{taskId}")
-    @PreAuthorize("hasRole('DRIVER')")
-    public String submitUserResponse(
-            @PathVariable String taskId,
-            @RequestBody Map<String, Object> request
-    ) {
-        Task task = taskService.createTaskQuery()
-                .taskId(taskId)
-                .singleResult();
 
-        if (task == null) {
-            return "Task not found";
-        }
-
-        Boolean resolved = request.get("resolved") != null
-                ? (Boolean) request.get("resolved")
-                : false;
-
-        Boolean continueAi = request.get("continueAi") != null
-                ? (Boolean) request.get("continueAi")
-                : false;
-
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("resolved", resolved);
-        variables.put("continueAi", continueAi);
-
-        taskService.complete(taskId, variables);
-
-        return "User response submitted successfully";
-    }
+   
 
     @PostMapping("/vendor-response")
     @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")

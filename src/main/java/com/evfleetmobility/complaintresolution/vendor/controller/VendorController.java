@@ -21,28 +21,26 @@ public class VendorController {
         this.vendorService = vendorService;
     }
 
-    // ALL VENDORS
+   
     @GetMapping
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public List<VendorDTO> getAllVendors() {
         return vendorService.getAllVendors();
     }
 
-    // APPROVED VENDORS
     @GetMapping("/approved")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public List<VendorDTO> getApprovedVendors() {
         return vendorService.getApprovedVendors();
     }
 
-    // AVAILABLE VENDORS
+   
     @GetMapping("/available")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public List<VendorDTO> getAvailableVendors() {
         return vendorService.getAvailableVendors();
     }
 
-    // SINGLE VENDOR DETAILS
     @PostMapping("/details")
     @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
     public VendorDTO getVendorDetails(
@@ -53,7 +51,7 @@ public class VendorController {
         );
     }
 
-    // FILTER BY EXPERTISE
+    
     @PostMapping("/expertise")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public List<VendorDTO> getVendorsByExpertise(
@@ -64,7 +62,7 @@ public class VendorController {
         );
     }
 
-    // FILTER BY AVAILABILITY
+   
     @PostMapping("/availability")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
     public List<VendorDTO> getVendorsByAvailability(

@@ -63,6 +63,14 @@ public class ComplaintController {
                                 complaintService.getComplaintDetails(request.getComplaintId()));
         }
 
+        @PostMapping("/ai-chat")
+        @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+        public ResponseEntity<?> getAIChatHistory(
+                        @RequestBody ComplaintDetailsRequestDTO request) {
+                return ResponseEntity.ok(
+                                complaintService.getAIChatHistory(request.getComplaintId()));
+        }
+
         @PostMapping("/filter/status")
         @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
         public ResponseEntity<?> getComplaintsByStatus(

@@ -42,7 +42,7 @@ public class EscalationServiceImpl implements EscalationService, JavaDelegate {
 
         System.out.println("Escalation reason: " + reason);
 
-        // ✅ Persist escalation status and reason to DB
+       
         complaintRepository.findById(complaintId).ifPresent(complaint -> {
             complaint.setStatus("ESCALATED_TO_MANAGER");
             complaint.setEscalationReason("Vendor could not resolve the issue: " + vendorName);

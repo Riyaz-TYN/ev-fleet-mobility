@@ -27,7 +27,6 @@ public class AuditLogController {
         return auditLogService.getLogsByComplaintId(request.getComplaintId());
     }
 
-    @Deprecated
     @GetMapping("/complaint/{complaintId}")
     public List<AuditLog> getLogsByComplaintId(@PathVariable Long complaintId) {
         return auditLogService.getLogsByComplaintId(complaintId);
