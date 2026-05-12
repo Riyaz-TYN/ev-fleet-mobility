@@ -231,6 +231,7 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new UserNotFoundException("Driver not found"));
 
         vehicle.setUser(driver);
+        vehicle.setStatus(com.evfleetmobility.useronboarding.vehicleservices.entity.VehicleStatus.ACTIVE);
         vehicleRepository.save(vehicle);
     }
 
