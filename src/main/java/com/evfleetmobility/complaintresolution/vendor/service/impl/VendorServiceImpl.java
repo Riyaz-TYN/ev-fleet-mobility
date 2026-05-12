@@ -1,6 +1,7 @@
 package com.evfleetmobility.complaintresolution.vendor.service.impl;
-import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
 
+import com.evfleetmobility.complaintresolution.auditlog.service.AuditLogService;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorDTO;
 import com.evfleetmobility.complaintresolution.vendor.service.VendorService;
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
 import com.evfleetmobility.useronboarding.profileservices.entity.OrganizationDetails;
@@ -36,16 +37,13 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
     @Autowired
     private TaskService taskService;
 
-
-
     @Override
     public void execute(DelegateExecution execution) {
 
-        // Vendor assignment started
-
         Boolean skipAuto = (Boolean) execution.getVariable("skipAutoAssignment");
+
         if (Boolean.TRUE.equals(skipAuto)) {
-            System.out.println(" Skipping auto-assignment due to manual override.");
+            System.out.println("Skipping auto-assignment due to manual override.");
             execution.removeVariable("skipAutoAssignment");
             return;
         }
@@ -71,8 +69,6 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         if (complaintLatitude == null
                 || complaintLongitude == null) {
 
-            // Location missing
-
             complaintLatitude = 11.0168;
             complaintLongitude = 76.9558;
         }
@@ -86,71 +82,118 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         String predictedCategory =
                 (String) execution.getVariable("predictedCategory");
 
-        String searchCategory = (predictedCategory != null && !predictedCategory.isBlank()) 
-                ? predictedCategory 
-                : issueCategory;
+        String searchCategory =
+                (predictedCategory != null
+                        && !predictedCategory.isBlank())
+                        ? predictedCategory
+                        : issueCategory;
 
-        // Searching for vendors with expertise
+        Complaint complaintForCheck =
+                complaintRepository.findById(complaintId)
+                        .orElse(null);
 
-        Complaint complaintForCheck = complaintRepository.findById(complaintId).orElse(null);
-        Long previousVendorId = (complaintForCheck != null) ? complaintForCheck.getVendorId() : null;
+        Long previousVendorId =
+                (complaintForCheck != null)
+                        ? complaintForCheck.getVendorId()
+                        : null;
 
         List<OrganizationDetails> availableVendors =
-                organizationRepo.findByApprovalStatusAndVendorAvailabilityTrue(ApprovalStatus.APPROVED);
+                organizationRepo
+                        .findByApprovalStatusAndVendorAvailabilityTrue(
+                                ApprovalStatus.APPROVED
+                        );
 
-        List<OrganizationDetails> validVendors = availableVendors.stream()
-                .filter(v -> v.getLatitude() != null && v.getLongitude() != null)
-                .filter(v -> previousVendorId == null || !v.getId().equals(previousVendorId))
-                .toList();
+        List<OrganizationDetails> validVendors =
+                availableVendors.stream()
+                        .filter(v ->
+                                v.getLatitude() != null
+                                        && v.getLongitude() != null
+                        )
+                        .filter(v ->
+                                previousVendorId == null
+                                        || !v.getId().equals(previousVendorId)
+                        )
+                        .toList();
 
         if (validVendors.isEmpty()) {
 
-            // No approved vendors found
-
-            Complaint complaint = complaintRepository.findById(complaintId)
-                    .orElseThrow(() -> new RuntimeException("Complaint not found"));
+            Complaint complaint =
+                    complaintRepository.findById(complaintId)
+                            .orElseThrow(() ->
+                                    new RuntimeException("Complaint not found")
+                            );
 
             complaint.setStatus("ESCALATED_TO_MANAGER");
-            complaint.setEscalationReason("No approved vendors available for assignment");
+
+            complaint.setEscalationReason(
+                    "No approved vendors available for assignment"
+            );
+
             complaintRepository.save(complaint);
 
             auditLogService.saveLog(
-                    complaintId, vehicleId, "VENDOR_UNRESOLVED", "SYSTEM", "AI_PROCESSED", "ESCALATED_TO_MANAGER",
-                    "No approved vendors available for assignment", new HashMap<>()
+                    complaintId,
+                    vehicleId,
+                    "VENDOR_UNRESOLVED",
+                    "SYSTEM",
+                    "AI_PROCESSED",
+                    "ESCALATED_TO_MANAGER",
+                    "No approved vendors available for assignment",
+                    new HashMap<>()
             );
 
-            throw new org.camunda.bpm.engine.delegate.BpmnError("NO_VENDOR", "No approved vendors found");
+            throw new org.camunda.bpm.engine.delegate.BpmnError(
+                    "NO_VENDOR",
+                    "No approved vendors found"
+            );
         }
 
-        // Filter by expertise if possible
-        List<OrganizationDetails> expertVendors = validVendors.stream()
-                .filter(v -> v.getExpertise() != null && searchCategory != null &&
-                        (v.getExpertise().toLowerCase().contains(searchCategory.toLowerCase()) ||
-                         searchCategory.toLowerCase().contains(v.getExpertise().toLowerCase())))
-                .toList();
-
-        List<OrganizationDetails> selectionPool = expertVendors.isEmpty() ? validVendors : expertVendors;
-
-        if (expertVendors.isEmpty()) {
-            // No vendors with matching expertise found
-        }
-
-        OrganizationDetails selectedVendor = selectionPool.stream()
-                .min(
-                        Comparator.comparingDouble((OrganizationDetails v) ->
-                                calculateDistance(
-                                        finalComplaintLatitude,
-                                        finalComplaintLongitude,
-                                        v.getLatitude(),
-                                        v.getLongitude()
+        List<OrganizationDetails> expertVendors =
+                validVendors.stream()
+                        .filter(v ->
+                                v.getExpertise() != null
+                                        && searchCategory != null
+                                        && (
+                                        v.getExpertise()
+                                                .toLowerCase()
+                                                .contains(searchCategory.toLowerCase())
+                                                ||
+                                                searchCategory.toLowerCase()
+                                                        .contains(
+                                                                v.getExpertise()
+                                                                        .toLowerCase()
+                                                        )
                                 )
-                        ).thenComparing(
-                                Comparator.comparingDouble(
-                                        OrganizationDetails::getVendorRating
-                                ).reversed()
                         )
-                )
-                .orElseThrow(() -> new RuntimeException("No vendor found in selection pool"));
+                        .toList();
+
+        List<OrganizationDetails> selectionPool =
+                expertVendors.isEmpty()
+                        ? validVendors
+                        : expertVendors;
+
+        OrganizationDetails selectedVendor =
+                selectionPool.stream()
+                        .min(
+                                Comparator.comparingDouble(
+                                        (OrganizationDetails v) ->
+                                                calculateDistance(
+                                                        finalComplaintLatitude,
+                                                        finalComplaintLongitude,
+                                                        v.getLatitude(),
+                                                        v.getLongitude()
+                                                )
+                                ).thenComparing(
+                                        Comparator.comparingDouble(
+                                                OrganizationDetails::getVendorRating
+                                        ).reversed()
+                                )
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "No vendor found in selection pool"
+                                )
+                        );
 
         double distanceKm =
                 calculateDistance(
@@ -190,14 +233,10 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 distanceKm
         );
 
-        // Assigned Vendor: ...
-
         Complaint complaint =
                 complaintRepository.findById(complaintId)
                         .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Complaint not found"
-                                )
+                                new RuntimeException("Complaint not found")
                         );
 
         complaint.setAssignedTeam(
@@ -205,59 +244,32 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         );
 
         complaint.setVendorId(selectedVendor.getId());
+
         complaint.setStatus("ASSIGNED_TO_VENDOR");
 
-        complaint.addWorkHistory("Vendor Assigned", selectedVendor.getCompanyName() + " (ID: " + selectedVendor.getId() + ")", null);
+        complaint.addWorkHistory(
+                "Vendor Assigned",
+                selectedVendor.getCompanyName()
+                        + " (ID: "
+                        + selectedVendor.getId()
+                        + ")",
+                null
+        );
 
         complaintRepository.save(complaint);
 
         Map<String, Object> metadata =
                 new HashMap<>();
 
-        metadata.put(
-                "vehicleId",
-                vehicleId
-        );
-
-        metadata.put(
-                "vendorId",
-                selectedVendor.getId()
-        );
-
-        metadata.put(
-                "vendorName",
-                selectedVendor.getCompanyName()
-        );
-
-        metadata.put(
-                "vendorLocation",
-                selectedVendor.getAddressLine1()
-        );
-
-        metadata.put(
-                "vendorRating",
-                selectedVendor.getVendorRating()
-        );
-
-        metadata.put(
-                "vendorExpertise",
-                selectedVendor.getExpertise()
-        );
-
-        metadata.put(
-                "distanceKm",
-                distanceKm
-        );
-
-        metadata.put(
-                "issueCategory",
-                issueCategory
-        );
-
-        metadata.put(
-                "complaintLocation",
-                location
-        );
+        metadata.put("vehicleId", vehicleId);
+        metadata.put("vendorId", selectedVendor.getId());
+        metadata.put("vendorName", selectedVendor.getCompanyName());
+        metadata.put("vendorLocation", selectedVendor.getAddressLine1());
+        metadata.put("vendorRating", selectedVendor.getVendorRating());
+        metadata.put("vendorExpertise", selectedVendor.getExpertise());
+        metadata.put("distanceKm", distanceKm);
+        metadata.put("issueCategory", issueCategory);
+        metadata.put("complaintLocation", location);
 
         auditLogService.saveLog(
                 complaintId,
@@ -271,33 +283,119 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         );
     }
 
-    public List<OrganizationDetails> getAllVendors() {
-        return organizationRepo.findAll();
+    // =========================
+    // DTO MAPPER
+    // =========================
+
+    private VendorDTO mapToDTO(OrganizationDetails org) {
+
+        VendorDTO dto = new VendorDTO();
+
+        dto.setVendorId(org.getId());
+
+        dto.setCompanyName(org.getCompanyName());
+
+        dto.setEmail(org.getEmail());
+
+        dto.setPhoneNumber(org.getPhoneNumber());
+
+        dto.setAddress(org.getAddressLine1());
+
+        dto.setRating(org.getVendorRating());
+
+        dto.setAvailability(org.getVendorAvailability());
+
+        dto.setExpertise(org.getExpertise());
+
+        dto.setLatitude(org.getLatitude());
+
+        dto.setLongitude(org.getLongitude());
+
+        dto.setApprovalStatus(
+                org.getApprovalStatus().name()
+        );
+
+        return dto;
     }
 
-    public OrganizationDetails getVendorById(Long id) {
-        return organizationRepo.findById(id)
-                .orElse(null);
+    // =========================
+    // VENDOR APIs
+    // =========================
+
+    @Override
+    public List<VendorDTO> getAllVendors() {
+
+        return organizationRepo.findAll()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
-    public List<OrganizationDetails> getAvailableVendors() {
-        return organizationRepo.findByApprovalStatusAndVendorAvailabilityTrue(ApprovalStatus.APPROVED);
+    @Override
+    public List<VendorDTO> getApprovedVendors() {
+
+        return organizationRepo
+                .findByApprovalStatus(
+                        ApprovalStatus.APPROVED
+                )
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
-    public List<OrganizationDetails> getVendorsByExpertise(
+    @Override
+    public VendorDTO getVendorById(Long id) {
+
+        OrganizationDetails vendor =
+                organizationRepo.findById(id)
+                        .orElse(null);
+
+        if (vendor == null) {
+            return null;
+        }
+
+        return mapToDTO(vendor);
+    }
+
+    @Override
+    public List<VendorDTO> getAvailableVendors() {
+
+        return organizationRepo
+                .findByApprovalStatusAndVendorAvailabilityTrue(
+                        ApprovalStatus.APPROVED
+                )
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    @Override
+    public List<VendorDTO> getVendorsByExpertise(
             String expertise) {
 
         return organizationRepo
-                .findByExpertiseIgnoreCase(expertise);
+                .findByExpertiseIgnoreCase(expertise)
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
-    public List<OrganizationDetails> getVendorsByAvailability(
+    @Override
+    public List<VendorDTO> getVendorsByAvailability(
             Boolean availability) {
 
         return organizationRepo
-                .findByVendorAvailability(availability);
+                .findByVendorAvailability(availability)
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
+    // =========================
+    // COMPLAINT OPERATIONS
+    // =========================
+
+    @Override
     public List<Complaint> getAssignedComplaints(
             Long vendorId) {
 
@@ -307,14 +405,15 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 );
     }
 
+    @Override
     public String updateComplaintStatus(
             Long complaintId,
             String status) {
 
         Complaint complaint =
                 complaintRepository.findById(complaintId)
-                        .orElseThrow(
-                                () -> new RuntimeException(
+                        .orElseThrow(() ->
+                                new RuntimeException(
                                         "Complaint not found"
                                 )
                         );
@@ -327,9 +426,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
 
         complaint.setStatus(status);
 
-        complaint.setAssignedTeam(
-                assignedVendor
-        );
+        complaint.setAssignedTeam(assignedVendor);
 
         complaintRepository.save(complaint);
 
@@ -341,14 +438,16 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 previousStatus,
                 status,
                 "Vendor updated complaint status",
-                java.util.Map.of(
-                        "status", status
+                Map.of(
+                        "status",
+                        status
                 )
         );
 
         return "Complaint status updated";
     }
 
+    @Override
     public String resolveComplaint(
             Long complaintId,
             Boolean resolved,
@@ -356,19 +455,20 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
 
         Complaint complaint =
                 complaintRepository.findById(complaintId)
-                        .orElseThrow(
-                                () -> new RuntimeException(
+                        .orElseThrow(() ->
+                                new RuntimeException(
                                         "Complaint not found"
                                 )
                         );
 
-        Task task = taskService.createTaskQuery()
-                .processVariableValueEquals(
-                        "complaintId",
-                        complaintId
-                )
-                .taskDefinitionKey("vendorTask")
-                .singleResult();
+        Task task =
+                taskService.createTaskQuery()
+                        .processVariableValueEquals(
+                                "complaintId",
+                                complaintId
+                        )
+                        .taskDefinitionKey("vendorTask")
+                        .singleResult();
 
         if (task == null) {
             return "Vendor task not found";
@@ -379,7 +479,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
 
         taskService.complete(
                 task.getId(),
-                java.util.Map.of(
+                Map.of(
                         "vendorResolved",
                         resolved
                 )
@@ -389,40 +489,68 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 complaint.getAssignedTeam();
 
         if (Boolean.TRUE.equals(resolved)) {
+
             complaint.setStatus("RESOLVED");
-            // ✅ Record which vendor resolved it
+
             complaint.addWorkHistory(
-                "Resolved by Vendor",
-                "Vendor: " + assignedVendor,
-                remarks != null && !remarks.isBlank() ? remarks : "Issue successfully resolved"
+                    "Resolved by Vendor",
+                    "Vendor: " + assignedVendor,
+                    remarks != null && !remarks.isBlank()
+                            ? remarks
+                            : "Issue successfully resolved"
             );
+
         } else {
+
             complaint.setStatus("ESCALATED_TO_MANAGER");
-            complaint.setEscalationReason("Vendor could not resolve: " + (remarks != null ? remarks : "No remarks provided"));
-            // ✅ Record which vendor failed to resolve it
+
+            complaint.setEscalationReason(
+                    "Vendor could not resolve: "
+                            + (
+                            remarks != null
+                                    ? remarks
+                                    : "No remarks provided"
+                    )
+            );
+
             complaint.addWorkHistory(
-                "Vendor Unresolved",
-                "Vendor: " + assignedVendor,
-                remarks != null && !remarks.isBlank() ? remarks : "Vendor could not resolve the issue"
+                    "Vendor Unresolved",
+                    "Vendor: " + assignedVendor,
+                    remarks != null && !remarks.isBlank()
+                            ? remarks
+                            : "Vendor could not resolve the issue"
             );
         }
 
         complaint.setAssignedTeam(assignedVendor);
+
         complaintRepository.save(complaint);
 
         auditLogService.saveLog(
                 complaintId,
                 complaint.getVehicleId(),
-                Boolean.TRUE.equals(resolved) ? "VENDOR_RESOLVED" : "VENDOR_UNRESOLVED",
+                Boolean.TRUE.equals(resolved)
+                        ? "VENDOR_RESOLVED"
+                        : "VENDOR_UNRESOLVED",
                 "VENDOR",
                 previousStatus,
                 complaint.getStatus(),
                 Boolean.TRUE.equals(resolved)
-                    ? "Complaint resolved by vendor: " + assignedVendor
-                    : "Vendor " + assignedVendor + " could not resolve: " + (remarks != null ? remarks : ""),
-                java.util.Map.of(
-                        "vendorName", assignedVendor,
-                        "vendorResolved", resolved
+                        ? "Complaint resolved by vendor: "
+                          + assignedVendor
+                        : "Vendor "
+                          + assignedVendor
+                          + " could not resolve: "
+                          + (
+                        remarks != null
+                        ? remarks
+                        : ""
+                ),
+                Map.of(
+                        "vendorName",
+                        assignedVendor,
+                        "vendorResolved",
+                        resolved
                 )
         );
 
@@ -431,10 +559,13 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
                 : "Complaint escalated to manager";
     }
 
+    // =========================
+    // HELPERS
+    // =========================
+
     private Double getDoubleVariable(
             DelegateExecution execution,
-            String name
-    ) {
+            String name) {
 
         Object value =
                 execution.getVariable(name);
@@ -444,8 +575,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         }
 
         if (value instanceof Number) {
-            return ((Number) value)
-                    .doubleValue();
+            return ((Number) value).doubleValue();
         }
 
         return Double.parseDouble(
@@ -457,8 +587,7 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
             double lat1,
             double lon1,
             double lat2,
-            double lon2
-    ) {
+            double lon2) {
 
         final int EARTH_RADIUS_KM = 6371;
 
@@ -471,10 +600,8 @@ public class VendorServiceImpl implements VendorService, JavaDelegate {
         double a =
                 Math.sin(latDistance / 2)
                         * Math.sin(latDistance / 2)
-
                         + Math.cos(Math.toRadians(lat1))
                         * Math.cos(Math.toRadians(lat2))
-
                         * Math.sin(lonDistance / 2)
                         * Math.sin(lonDistance / 2);
 

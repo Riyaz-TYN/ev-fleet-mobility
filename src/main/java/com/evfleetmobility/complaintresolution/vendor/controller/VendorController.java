@@ -1,10 +1,11 @@
 package com.evfleetmobility.complaintresolution.vendor.controller;
 
-import com.evfleetmobility.useronboarding.profileservices.entity.OrganizationDetails;
-import com.evfleetmobility.complaintresolution.vendor.service.VendorService;
-import com.evfleetmobility.complaintresolution.vendor.dto.VendorIdRequestDTO;
-import com.evfleetmobility.complaintresolution.vendor.dto.VendorExpertiseRequestDTO;
 import com.evfleetmobility.complaintresolution.vendor.dto.VendorAvailabilityRequestDTO;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorDTO;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorExpertiseRequestDTO;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorIdRequestDTO;
+import com.evfleetmobility.complaintresolution.vendor.service.VendorService;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,35 +21,57 @@ public class VendorController {
         this.vendorService = vendorService;
     }
 
+    // ALL VENDORS
     @GetMapping
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<OrganizationDetails> getAllVendors() {
+    public List<VendorDTO> getAllVendors() {
         return vendorService.getAllVendors();
     }
 
-    @PostMapping("/details")
-    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
-    public OrganizationDetails getVendorDetails(@RequestBody VendorIdRequestDTO request) {
-        return vendorService.getVendorById(request.getVendorId());
+    // APPROVED VENDORS
+    @GetMapping("/approved")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+    public List<VendorDTO> getApprovedVendors() {
+        return vendorService.getApprovedVendors();
     }
 
+    // AVAILABLE VENDORS
     @GetMapping("/available")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<OrganizationDetails> getAvailableVendors() {
+    public List<VendorDTO> getAvailableVendors() {
         return vendorService.getAvailableVendors();
     }
 
-    @PostMapping("/expertise")
-    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<OrganizationDetails> getVendorsByExpertise(
-            @RequestBody VendorExpertiseRequestDTO request) {
-        return vendorService.getVendorsByExpertise(request.getExpertise());
+    // SINGLE VENDOR DETAILS
+    @PostMapping("/details")
+    @PreAuthorize("hasAnyRole('VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
+    public VendorDTO getVendorDetails(
+            @RequestBody VendorIdRequestDTO request) {
+
+        return vendorService.getVendorById(
+                request.getVendorId()
+        );
     }
 
+    // FILTER BY EXPERTISE
+    @PostMapping("/expertise")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
+    public List<VendorDTO> getVendorsByExpertise(
+            @RequestBody VendorExpertiseRequestDTO request) {
+
+        return vendorService.getVendorsByExpertise(
+                request.getExpertise()
+        );
+    }
+
+    // FILTER BY AVAILABILITY
     @PostMapping("/availability")
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN','SUPER_ADMIN')")
-    public List<OrganizationDetails> getVendorsByAvailability(
+    public List<VendorDTO> getVendorsByAvailability(
             @RequestBody VendorAvailabilityRequestDTO request) {
-        return vendorService.getVendorsByAvailability(request.getAvailability());
+
+        return vendorService.getVendorsByAvailability(
+                request.getAvailability()
+        );
     }
 }

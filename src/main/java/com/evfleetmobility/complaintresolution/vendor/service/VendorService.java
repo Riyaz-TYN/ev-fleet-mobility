@@ -1,21 +1,47 @@
 package com.evfleetmobility.complaintresolution.vendor.service;
 
 import com.evfleetmobility.complaintresolution.complaint.entity.Complaint;
-import com.evfleetmobility.useronboarding.profileservices.entity.OrganizationDetails;
+import com.evfleetmobility.complaintresolution.vendor.dto.VendorDTO;
+
 import org.camunda.bpm.engine.delegate.DelegateExecution;
+
 import java.util.List;
 
 public interface VendorService {
+
     void execute(DelegateExecution execution);
-    List<OrganizationDetails> getAllVendors();
-    OrganizationDetails getVendorById(Long id);
-    List<OrganizationDetails> getAvailableVendors();
-    List<OrganizationDetails> getVendorsByExpertise(String expertise);
-    List<OrganizationDetails> getVendorsByAvailability(Boolean availability);
+
+    // ALL VENDORS
+    List<VendorDTO> getAllVendors();
+
+    // APPROVED VENDORS
+    List<VendorDTO> getApprovedVendors();
+
+    // SINGLE VENDOR
+    VendorDTO getVendorById(Long id);
+
+    // AVAILABLE VENDORS
+    List<VendorDTO> getAvailableVendors();
+
+    // FILTER BY EXPERTISE
+    List<VendorDTO> getVendorsByExpertise(String expertise);
+
+    // FILTER BY AVAILABILITY
+    List<VendorDTO> getVendorsByAvailability(Boolean availability);
+
+    // ASSIGNED COMPLAINTS
     List<Complaint> getAssignedComplaints(Long vendorId);
-    String updateComplaintStatus(Long complaintId,
-            String status);
-    String resolveComplaint(Long complaintId,
+
+    // UPDATE STATUS
+    String updateComplaintStatus(
+            Long complaintId,
+            String status
+    );
+
+    // RESOLVE COMPLAINT
+    String resolveComplaint(
+            Long complaintId,
             Boolean resolved,
-            String remarks);
+            String remarks
+    );
 }
