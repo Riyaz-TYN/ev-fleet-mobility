@@ -52,8 +52,12 @@ public class ComplaintController {
         @GetMapping
         @PreAuthorize("hasAnyRole('DRIVER','VENDOR_ADMIN','MANAGER','ADMIN','SUPER_ADMIN')")
         public ResponseEntity<?> getComplaints(
+                        @RequestParam(required = false) String vehicleId,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "10") int size) {
+                if (vehicleId != null && !vehicleId.isBlank()) {
+                        return ResponseEntity.ok(complaintService.getComplaintsByVehicle(vehicleId, page, size));
+                }
                 return ResponseEntity.ok(complaintService.getComplaints(page, size));
         }
 

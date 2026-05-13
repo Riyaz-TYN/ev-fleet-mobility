@@ -5,6 +5,7 @@ public class VehicleResponse {
     private Long userId;
     private String make;
     private String model;
+    private String fullname;
     private String licensePlate;
     private String vin;
     private String status;
@@ -32,4 +33,6 @@ public class VehicleResponse {
     public void setBatteryCapacityKwh(Double batteryCapacityKwh) { this.batteryCapacityKwh = batteryCapacityKwh; }
     public String getChassisNo() {return chassisNo;}
     public void setChassisNo(String chassisNo) {this.chassisNo = chassisNo;}
+    public void setFullname(String fullname) {this.fullname=fullname;}
+    public String getFullname(){return fullname;}
 }

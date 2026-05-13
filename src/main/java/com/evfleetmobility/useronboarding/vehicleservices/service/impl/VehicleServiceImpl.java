@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -112,6 +113,7 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
+    @Transactional
     public VehicleResponse getVehicleById(Long vehicleId) {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new VehicleNotFoundException("Vehicle not found with ID: " + vehicleId));
@@ -119,6 +121,7 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
+    @Transactional
     public Page<VehicleResponse> getAllVehicles(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return vehicleRepository.findAll(pageable)
@@ -130,6 +133,7 @@ public class VehicleServiceImpl implements VehicleService {
         response.setId(vehicle.getId());
         if (vehicle.getUser() != null) {
             response.setUserId(vehicle.getUser().getId());
+            response.setFullname(vehicle.getUser().getFullName());
         }
         response.setMake(vehicle.getMake());
         response.setModel(vehicle.getModel());
